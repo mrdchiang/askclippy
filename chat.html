@@ -42,26 +42,53 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .placeholder h2{color:var(--text-sec);font-size:18px;margin-bottom:8px}
 .placeholder .examples{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
 .placeholder .examples button{background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-sec);padding:8px 14px;font-size:13px;cursor:pointer;transition:all .15s}
-.placeholder .examples button:hover{border-color:var(--accent);color:var(--text);background:var(--bg-hover,var(--elevated))}
+.placeholder .examples button:hover{border-color:var(--accent);color:var(--text)}
+.upload-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;font-size:13px}
+.upload-bar label{padding:6px 12px;border:1px dashed var(--border);border-radius:var(--radius);color:var(--text-muted);cursor:pointer;transition:all .15s;font-size:12px}
+.upload-bar label:hover{border-color:var(--accent);color:var(--text-sec)}
+.upload-bar .file-info{color:var(--text-muted);font-size:12px;flex:1}
+.upload-bar .status{font-size:12px;font-weight:600}
+.upload-bar .status.loaded{color:var(--good)}
+.upload-bar .status.processing{color:var(--medium)}
 .input-area{background:var(--surface);border-top:1px solid var(--border);padding:16px 24px;display:flex;gap:12px;flex-shrink:0}
 .input-area input{flex:1;background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:12px 16px;font-size:14px;font-family:inherit}
 .input-area input:focus{outline:none;border-color:var(--accent)}
 .input-area button{background:var(--accent);border:none;border-radius:var(--radius);color:#fff;padding:12px 20px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s}
-.input-area button:hover{background:var(--accent-dim,#0052cc)}
+.input-area button:hover{background:#0052cc}
 .input-area button:disabled{opacity:0.5;cursor:not-allowed}
 .badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600}
 .badge-crit{background:#351520;color:var(--critical)}
 .badge-high{background:#352215;color:var(--high)}
 .badge-med{background:#353015;color:var(--medium)}
 .badge-good{background:#123020;color:var(--good)}
-.loading::after{content:"...";animation:dots 1.5s infinite}
-@keyframes dots{0%,20%{content:"."}40%{content:".."}60%,100%{content:"..."}}
-@media(max-width:768px){.sidebar{display:none}.msg{max-width:100%}}
+
+/* ── Animated Clippy ───────────────────────────────────── */
+.clippy-corner{position:fixed;bottom:80px;right:20px;z-index:1000;cursor:pointer;transition:transform .3s,opacity .3s;opacity:0.7}
+.clippy-corner:hover{transform:scale(1.1);opacity:1}
+.clippy-corner.thinking{animation:clippy-bounce 0.6s ease-in-out infinite alternate}
+@keyframes clippy-bounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-6px) scale(1.05)}}
+.clippy-corner.hidden{opacity:0;pointer-events:none;transform:translateY(20px)}
+.clippy-bubble{position:fixed;bottom:170px;right:20px;background:var(--elevated);border:1px solid var(--accent);border-radius:12px 12px 12px 4px;padding:10px 14px;font-size:12px;max-width:280px;color:var(--text-sec);z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:all .3s;line-height:1.5}
+.clippy-bubble.hidden{opacity:0;pointer-events:none;transform:translateY(10px)}
+.clippy-svg{width:48px;height:48px}
+.clippy-eyes{animation:clippy-blink 3s infinite}
+@keyframes clippy-blink{0%,95%,100%{ry:6}97%{ry:1}}
+.clippy-arms{transition:all .3s}
+.clippy-corner.thinking .clippy-arms{transform:rotate(-15deg) translateX(-3px)}
+.clippy-corner.tapping .clippy-arms{animation:clippy-tap 0.4s ease-in-out 3}
+@keyframes clippy-tap{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .msg{max-width:100%}
+  .clippy-corner{bottom:70px;right:10px;transform:scale(0.8)}
+  .clippy-bubble{bottom:140px;right:10px;max-width:200px;font-size:11px}
+}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="logo">🗄️</div>
+  <div class="logo">📎</div>
   <h1>AskClippy</h1>
   <span class="sub">Ask your infrastructure anything</span>
 </div>
@@ -75,20 +102,33 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
       <div class="stat"><div class="val" id="stat-health">—</div><div class="lbl">Endpoint Health</div></div>
       <div class="stat"><div class="val" id="stat-gpo">—</div><div class="lbl">GPO Compliance</div></div>
     </div>
+    <div class="section" style="margin-top:16px">
+      <h3>AI Mode</h3>
+      <div id="ai-mode-display" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
+        <div><span id="mode-icon">🔍</span> <span id="mode-label">Local Search</span></div>
+        <div style="color:var(--text-muted);margin-top:4px;font-size:11px" id="mode-detail">No AI API configured</div>
+      </div>
+    </div>
     <div class="section">
       <h3>About</h3>
       <p style="font-size:12px;color:var(--text-muted);line-height:1.5">
-        Knowledge snapshot from your vulnerability management tools.
-        Ask about assets, CVEs, compliance, teams, or remediation status.
+        Drop a Tenable CSV or JSON file above to load your data.
+        Ask about assets, CVEs, compliance, or remediation status.
       </p>
     </div>
   </div>
   <div class="chat-area">
+    <div class="upload-bar" id="uploadBar">
+      <label for="fileInput">📂 Upload Scan Data</label>
+      <input type="file" id="fileInput" accept=".csv,.json" style="display:none" onchange="handleFileUpload(event)">
+      <span class="file-info" id="fileInfo">Load a Tenable CSV or JSON file</span>
+      <span class="status" id="uploadStatus"></span>
+    </div>
     <div class="messages" id="messages">
       <div class="placeholder" id="placeholder">
-        <div class="icon">🔍</div>
-        <h2>Ask about your VM data</h2>
-        <p style="color:var(--text-muted)">Natural language queries about your infrastructure</p>
+        <div class="icon">📎</div>
+        <h2>Ask about your infrastructure</h2>
+        <p style="color:var(--text-muted)">Upload a scan file or use the built-in knowledge snapshot</p>
         <div class="examples">
           <button onclick="ask('Which assets have critical KEV vulnerabilities?')">Critical KEV CVEs</button>
           <button onclick="ask('Show me the health status of all domain controllers')">DC health</button>
@@ -106,28 +146,54 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   </div>
 </div>
 
+<!-- ── Animated Clippy ──────────────────────────────── -->
+<div class="clippy-bubble hidden" id="clippy-bubble"></div>
+<div class="clippy-corner" id="clippy-corner" onclick="clippyRandom()" title="Click me!">
+  <svg class="clippy-svg" viewBox="0 0 48 48" fill="none">
+    <rect x="14" y="6" width="20" height="28" rx="4" fill="var(--accent)" opacity="0.85"/>
+    <rect x="16" y="8" width="16" height="24" rx="3" fill="var(--elevated)" stroke="var(--border)" stroke-width="1.5"/>
+    <ellipse class="clippy-eyes" cx="20" cy="16" rx="2.5" ry="6" fill="var(--text)"/>
+    <ellipse class="clippy-eyes" cx="28" cy="16" rx="2.5" ry="6" fill="var(--text)"/>
+    <path d="M20 22 Q24 26 28 22" stroke="var(--accent)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <line class="clippy-arms" x1="14" y1="22" x2="8" y2="18" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line class="clippy-arms" x1="34" y1="22" x2="40" y2="18" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="18" y1="34" x2="16" y2="42" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="30" y1="34" x2="32" y2="42" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</div>
+
 <script>
+// ═══════════════════════════════════════════════════════════
+//  ASKCLIPPY — Talk to your VM data
+// ═══════════════════════════════════════════════════════════
+
 // ── Configuration ──────────────────────────────────────────
 const KNOWLEDGE_PATH = "knowledge-snapshot.md";
-const USE_AI_API = false; // Set true when you have a Bedrock/OpenAI API endpoint
-const AI_API_URL = "";    // e.g. "https://your-api.com/chat"
-const AI_API_KEY = "";
 
-let knowledge = "";  // raw markdown knowledge
-let messages = [];
+// Local LLM (Ollama) — uncomment and set model name to use
+// const USE_OLLAMA = true;
+// const OLLAMA_URL = "http://localhost:11434/api/generate";
+// const OLLAMA_MODEL = "llama3.2"; // or "mistral", "codellama", "phi3:mini"
 
-// ── Load knowledge ─────────────────────────────────────────
+const USE_OLLAMA = false;
+const OLLAMA_URL = "http://localhost:11434/api/generate";
+const OLLAMA_MODEL = "llama3.2";
+
+let knowledge = "";
+let uploadedData = null; // raw parsed upload data
+
+// ── Load knowledge snapshot ───────────────────────────────
 async function loadKnowledge() {
   try {
     const resp = await fetch(KNOWLEDGE_PATH);
     if (!resp.ok) throw new Error("Not found");
     knowledge = await resp.text();
-    console.log(`Loaded knowledge (${knowledge.length} chars)`);
-    // Update sidebar
     extractStats(knowledge);
+    updateModeDisplay();
+    clippySay("Loaded environment knowledge. Ask me anything!");
   } catch(e) {
-    console.warn("No knowledge file found, using fallback");
-    knowledge = "Environment knowledge not loaded.";
+    knowledge = "";
+    clippySay("No knowledge file found. Upload a scan to get started!");
   }
 }
 
@@ -137,7 +203,6 @@ function extractStats(md) {
   const mCVEs = md.match(/(\d+) CVEs/);
   const mHealth = md.match(/health: (\d+)%/);
   const mGPO = md.match(/GPO compliance: (\d+)%/);
-
   if (mAssets) document.getElementById("stat-assets").textContent = mAssets[1];
   if (mFindings) document.getElementById("stat-findings").textContent = mFindings[1];
   if (mCVEs) document.getElementById("stat-cves").textContent = mCVEs[1];
@@ -145,192 +210,267 @@ function extractStats(md) {
   if (mGPO) document.getElementById("stat-gpo").textContent = mGPO[1] + "%";
 }
 
-// ── Query AI ───────────────────────────────────────────────
-async function queryAI(userQuestion) {
-  if (USE_AI_API && AI_API_URL) {
+function updateModeDisplay() {
+  const icon = document.getElementById("mode-icon");
+  const label = document.getElementById("mode-label");
+  const detail = document.getElementById("mode-detail");
+  if (USE_OLLAMA) {
+    icon.textContent = "🧠";
+    label.textContent = "Local LLM (" + OLLAMA_MODEL + ")";
+    detail.textContent = "via Ollama at " + OLLAMA_URL;
+  } else {
+    icon.textContent = "🔍";
+    label.textContent = "Local Search";
+    detail.textContent = "Keyword matching on knowledge snapshot";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILE UPLOAD — Drop Tenable CSV / JSON
+// ═══════════════════════════════════════════════════════════
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  const status = document.getElementById("uploadStatus");
+  const info = document.getElementById("fileInfo");
+
+  status.textContent = "⏳ Processing...";
+  status.className = "status processing";
+  info.textContent = file.name + " (" + (file.size / 1024).toFixed(0) + " KB)";
+  clippySay("Processing " + file.name + "...");
+
+  reader.onload = function(e) {
+    const text = e.target.result;
+    if (file.name.endsWith(".json")) {
+      try { parseJSONUpload(text, file.name); }
+      catch(err) { status.textContent = "⚠️ Invalid JSON"; status.className = "status"; }
+    } else {
+      try { parseCSVUpload(text, file.name); }
+      catch(err) { status.textContent = "⚠️ Parse error"; status.className = "status"; }
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseJSONUpload(text, filename) {
+  const data = JSON.parse(text);
+  uploadedData = data;
+  // Convert to knowledge markdown
+  const md = jsonToKnowledge(data, filename);
+  knowledge = md;
+  extractStats(md);
+  document.getElementById("uploadStatus").textContent = "✅ " + (data.assets ? data.assets.length : "?") + " assets loaded";
+  document.getElementById("uploadStatus").className = "status loaded";
+  document.getElementById("placeholder").style.display = "none";
+  addMessage("ai", "✅ Loaded **" + filename + "** — " + knowledge.split("\\n").filter(l => l.startsWith("- ")).length + " data points. Ask me anything!");
+  clippySay("Data loaded! What do you want to know?");
+}
+
+function parseCSVUpload(text, filename) {
+  const lines = text.split("\\n").filter(l => l.trim());
+  if (lines.length < 2) throw new Error("Empty CSV");
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+  const rows = lines.slice(1).map(l => {
+    const vals = l.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+    const row = {};
+    headers.forEach((h, i) => row[h] = vals[i] || "");
+    return row;
+  });
+  uploadedData = { rows, headers };
+  // Build knowledge from CSV
+  const md = csvToKnowledge(rows, headers, filename);
+  knowledge = md;
+  extractStats(md);
+  document.getElementById("uploadStatus").textContent = "✅ " + rows.length + " rows loaded";
+  document.getElementById("uploadStatus").className = "status loaded";
+  document.getElementById("placeholder").style.display = "none";
+  addMessage("ai", "✅ Loaded **" + filename + "** (" + rows.length + " rows). Ask me about your scan data!");
+  clippySay("CSV loaded! What should I look up?");
+}
+
+// ── Convert uploaded data to knowledge markdown ──────────
+function jsonToKnowledge(data, filename) {
+  let md = "# AskClippy Knowledge — " + filename + "\\n## Overview\\n";
+  const assets = data.assets || data.hosts || [];
+  const findings = data.findings || data.vulnerabilities || [];
+  const cves = data.cves || {};
+
+  md += "- " + assets.length + " assets, " + findings.length + " findings\\n\\n";
+  md += "## Assets\\n";
+  for (const a of assets.slice(0, 200)) {
+    const name = a.hostname || a.name || a.ip || "?";
+    const os = a.os || "?";
+    const ip = a.ip || "?";
+    const sev = a.severity || "";
+    md += "- " + name + " (" + os + ", " + ip + ")" + (sev ? " [" + sev + "]" : "") + "\\n";
+  }
+  if (assets.length > 200) md += "- ...and " + (assets.length - 200) + " more assets\\n";
+  md += "\\n## Findings\\n";
+  for (const f of findings.slice(0, 300)) {
+    const cve = f.cve || f.plugin_id || "?";
+    const name = f.name || f.title || "?";
+    const sev = f.severity || f.risk || "Medium";
+    const host = f.host || f.ip || f.asset || "?";
+    md += "- " + cve + ": " + name + " | " + sev + " | " + host + "\\n";
+  }
+  return md;
+}
+
+function csvToKnowledge(rows, headers, filename) {
+  let md = "# AskClippy Knowledge — " + filename + "\\n## Overview\\n- " + rows.length + " records\\n\\n## Data\\n";
+  for (const row of rows.slice(0, 300)) {
+    const vals = Object.entries(row).map(([k,v]) => k + ": " + v).join(" | ");
+    md += "- " + vals + "\\n";
+  }
+  return md;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  QUERY ENGINE — Local LLM (Ollama) + Local Search
+// ═══════════════════════════════════════════════════════════
+
+async function queryAI(question) {
+  if (USE_OLLAMA) {
     try {
-      const resp = await fetch(AI_API_URL, {
+      const prompt = "You are AskClippy, an IT infrastructure assistant. Answer the question using ONLY the provided knowledge context. If the answer isn't in the context, say so.\\n\\nKNOWLEDGE:\\n" + knowledge.slice(0, 8000) + "\\n\\nQUESTION: " + question + "\\n\\nAnswer:";
+      const resp = await fetch(OLLAMA_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + AI_API_KEY,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: userQuestion,
-          context: knowledge,
-          model: "claude-sonnet-4",
+          model: OLLAMA_MODEL,
+          prompt: prompt,
+          stream: false,
+          options: { temperature: 0.1, num_predict: 512 }
         }),
       });
-      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      if (!resp.ok) throw new Error("Ollama " + resp.status);
       const data = await resp.json();
-      return { answer: data.answer || data.response || JSON.stringify(data), sources: data.sources || [] };
+      const answer = (data.response || "").trim();
+      if (answer) return { answer: answer, sources: ["Ollama/" + OLLAMA_MODEL] };
+      throw new Error("Empty response");
     } catch(e) {
-      return { answer: `⚠️ AI API error: ${e.message}. Falling back to local search.`, sources: [] };
+      return { answer: "⚠️ Ollama error: " + e.message + ". Falling back to local search.", sources: [] };
     }
   }
-
-  // ── Local search (no AI API needed) ─────────────────────
-  return localSearch(userQuestion);
+  // ── Local keyword search (fallback) ───────────────────
+  return localSearch(question);
 }
 
 function localSearch(question) {
   const q = question.toLowerCase();
+  if (!knowledge) return { answer: "No knowledge loaded. Upload a scan file first!", sources: [] };
+  const lines = knowledge.split("\\n");
   let answer = "";
   let sources = [];
 
-  // Check for key terms and build answer from knowledge
-  const lines = knowledge.split("\n");
-
   if (q.includes("critical") && (q.includes("kev") || q.includes("exploit"))) {
-    // Find Critical KEV CVEs section
-    const capture = captureSection(lines, "Critical KEV CVEs", "All Active CVEs");
-    if (capture) {
-      answer = "**Critical KEV CVEs:**\n" + capture.join("\n");
-      sources = capture.map(l => l.replace(/^-\s*/, "").split("|")[0].trim()).filter(Boolean);
-    }
+    const cap = captureSection(lines, "Critical KEV CVEs", "All Active CVEs");
+    if (cap) { answer = "**Critical KEV CVEs:**\\n" + cap.join("\\n"); sources = cap.map(l => l.match(/CVE-[\\d-]+/)?.[0]).filter(Boolean); }
   }
-  else if (q.includes("health") || q.includes("unhealthy") || q.includes("dc") || q.includes("domain controller")) {
-    const capture = captureSection(lines, "Assets With Critical Findings", "All Assets");
-    const dcAssets = (capture || []).filter(l => l.toLowerCase().includes("dc-"));
-    if (dcAssets.length > 0 && (q.includes("dc") || q.includes("domain"))) {
-      answer = "**Domain Controller Health:**\n" + dcAssets.join("\n");
-      sources = dcAssets.map(l => l.match(/^-\s*(\S+)/)?.[1]).filter(Boolean);
-    } else if (capture) {
-      const unhealthy = capture.filter(l => l.includes("Health:") && parseInt(l.match(/Health:\s*(\d+)/)?.[1] || "100") < 70);
-      if (unhealthy.length > 0) {
-        answer = "**Assets with poor health (< 70%):**\n" + unhealthy.join("\n");
-      } else {
-        answer = "**Assets with critical findings:**\n" + capture.join("\n");
-      }
-      sources = capture.map(l => l.match(/^-\s*(\S+)/)?.[1]).filter(Boolean);
-    }
+  else if (q.includes("health") || q.includes("unhealthy") || q.includes("dc ") || q.includes("domain controller")) {
+    const cap = captureSection(lines, "Assets With Critical Findings", "All Assets");
+    const dcs = (cap || []).filter(l => l.toLowerCase().includes("dc-"));
+    if (dcs.length > 0) { answer = "**Domain Controllers:**\\n" + dcs.join("\\n"); sources = dcs.map(l => l.match(/-\\s*(\\S+)/)?.[1]).filter(Boolean); }
+    else if (cap) { answer = "**Assets With Critical Findings:**\\n" + cap.join("\\n"); }
   }
   else if (q.includes("gpo") || q.includes("compliance")) {
-    const capture = captureSection(lines, "Compliance", "Activity");
-    if (capture) answer = "**Compliance Summary:**\n" + capture.join("\n");
+    const cap = captureSection(lines, "Compliance", "Activity");
+    if (cap) answer = "**Compliance:**\\n" + cap.join("\\n");
   }
   else if (q.includes("executive") || q.includes("summary") || q.includes("overview") || q.includes("posture")) {
-    const overview = captureSection(lines, "Overview", "Compliance");
-    const activity = captureSection(lines, "Activity", "Critical KEV CVEs");
-    const parts = [];
-    if (overview) parts.push("**Overview:**\n" + overview.join("\n"));
-    if (activity) parts.push("**Activity:**\n" + activity.join("\n"));
-    answer = parts.join("\n\n");
+    const ov = captureSection(lines, "Overview", "Compliance");
+    if (ov) answer = "**Overview:**\\n" + ov.join("\\n");
   }
-  else if (q.includes("cve") || q.includes("vulnerability")) {
-    // Search for specific CVE
-    const cveMatch = q.match(/cve[-\s]*(\d{4}[-\s]*\d+)/i);
-    if (cveMatch) {
-      const cveId = "CVE-" + cveMatch[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
-      const cveLines = lines.filter(l => l.includes(cveId));
-      if (cveLines.length > 0) {
-        answer = "**" + cveId + ":**\n" + cveLines.join("\n");
-        sources = [cveId];
-      }
+  else if (q.includes("cve")) {
+    const m = q.match(/cve[-\\s]*(\\d{4}[-\\s]*\\d+)/i);
+    if (m) {
+      const id = "CVE-" + m[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
+      const hl = lines.filter(l => l.includes(id));
+      if (hl.length > 0) { answer = "**" + id + ":**\\n" + hl.join("\\n"); sources = [id]; }
     }
     if (!answer) {
-      const allCves = captureSection(lines, "All Active CVEs", "Assets With Critical Findings");
-      if (allCves) {
-        // Filter by severity if asked
-        if (q.includes("critical")) {
-          const crit = allCves.filter(l => l.includes("Critical"));
-          answer = "**Critical CVEs (" + crit.length + "):**\n" + crit.slice(0, 10).join("\n");
-          if (crit.length > 10) answer += "\n...and " + (crit.length - 10) + " more";
-        } else {
-          answer = "**All Active CVEs (" + allCves.length + "):**\n" + allCves.slice(0, 15).join("\n");
-          if (allCves.length > 15) answer += "\n...and " + (allCves.length - 15) + " more";
-        }
+      const all = captureSection(lines, "All Active CVEs", "Assets With Critical Findings");
+      if (all) {
+        const crit = q.includes("critical") ? all.filter(l => l.includes("Critical")) : all;
+        answer = "**CVEs (" + crit.length + "):**\\n" + crit.slice(0, 10).join("\\n");
+        if (crit.length > 10) answer += "\\n...and " + (crit.length - 10) + " more";
       }
     }
   }
   else if (q.includes("team") || q.includes("infrastructure") || q.includes("platform")) {
-    const teams = captureSection(lines, "Team Health", "Critical KEV CVEs");
-    if (teams && teams.length > 0) {
-      answer = "**Team Health:**\n" + teams.join("\n");
-    }
-  }
-  else if (q.includes("asset") || q.includes("endpoint") || q.includes("machine") || q.includes("host")) {
-    // Search for specific hostname
-    const hostMatch = q.match(/([A-Z0-9]+(?:-PROD|-[A-Z]+-\d+))/i);
-    if (hostMatch) {
-      const hn = hostMatch[1].toUpperCase();
-      const assetLines = lines.filter(l => l.includes(hn) && l.startsWith("- "));
-      if (assetLines.length > 0) {
-        answer = "**" + hn + ":**\n" + assetLines.join("\n");
-        sources = [hn];
-      }
-    }
-    if (!answer) {
-      const allAssets = captureSection(lines, "All Assets", null);
-      if (allAssets) {
-        answer = "**All Assets (" + allAssets.length + "):**\n" + allAssets.slice(0, 10).join("\n");
-        if (allAssets.length > 10) answer += "\n...and " + (allAssets.length - 10) + " more";
-      }
-    }
+    const t = captureSection(lines, "Team Health", "Critical KEV CVEs");
+    if (t && t.length > 0) answer = "**Teams:**\\n" + t.join("\\n");
   }
   else if (q.includes("remediation") || q.includes("deploy")) {
-    const activity = captureSection(lines, "Activity", "Critical KEV CVEs");
-    if (activity) answer = "**Remediation Activity:**\n" + activity.join("\n");
+    const a = captureSection(lines, "Activity", "Critical KEV CVEs");
+    if (a) answer = "**Activity:**\\n" + a.join("\\n");
+  }
+
+  if (!answer && knowledge.length > 100) {
+    const allAssets = captureSection(lines, "All Assets", null);
+    if (allAssets) {
+      answer = "**All Assets (" + allAssets.length + "):**\\n" + allAssets.slice(0, 10).join("\\n");
+      if (allAssets.length > 10) answer += "\\n...and " + (allAssets.length - 10) + " more";
+    }
   }
 
   if (!answer) {
-    answer = "I couldn't find a specific match for your question. Try:\n"
-      + "- \"Which assets have critical KEV vulnerabilities?\"\n"
-      + "- \"Show me health status of domain controllers\"\n"
-      + "- \"What is our GPO compliance rate?\"\n"
-      + "- \"Executive summary of our security posture\"\n"
-      + "- \"Tell me about CVE-2026-10011\"\n"
-      + "- \"List all critical CVEs\"\n"
-      + "- \"How is the infrastructure team doing?\"";
+    answer = "I couldn't find a match. Try:\\n"
+      + "- \"Which assets have critical KEV vulnerabilities?\"\\n"
+      + "- \"Show me health status of domain controllers\"\\n"
+      + "- \"What is our GPO compliance rate?\"\\n"
+      + "- \"Executive summary of our security posture\"\\n"
+      + "- \"Tell me about CVE-2026-10011\"\\n"
+      + "- \"List all critical CVEs\"";
   }
-
   return { answer, sources };
 }
 
 function captureSection(lines, startLabel, endLabel) {
-  let capturing = false;
-  let captured = [];
+  let capturing = false, captured = [];
   for (const line of lines) {
-    if (line.startsWith("## ") && line.includes(startLabel)) {
-      capturing = true;
-      continue;
-    }
+    if (line.startsWith("## ") && line.includes(startLabel)) { capturing = true; continue; }
     if (capturing && endLabel && line.startsWith("## ") && line.includes(endLabel)) break;
     if (capturing && line.startsWith("- ")) captured.push(line);
   }
   return captured.length > 0 ? captured : null;
 }
 
-// ── Chat UI ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  CHAT UI
+// ═══════════════════════════════════════════════════════════
+
 function addMessage(role, content, sources) {
   const el = document.createElement("div");
   el.className = "msg " + role;
-
   if (role === "user") {
     el.textContent = content;
   } else {
-    el.innerHTML = `<div class="label">🤖 AI Assistant</div><div class="answer">${content}</div>`;
+    el.innerHTML = '<div class="label">📎 AskClippy</div><div class="answer">' + content + "</div>";
     if (sources && sources.length > 0) {
-      el.innerHTML += `<div class="sources">Sources: ${sources.map(s => `<span class="src">${s}</span>`).join(" ")}</div>`;
+      el.innerHTML += '<div class="sources">Sources: ' + sources.map(s => '<span class="src">' + s + "</span>").join(" ") + "</div>";
     }
   }
-
   document.getElementById("messages").appendChild(el);
   el.scrollIntoView({ behavior: "smooth" });
 }
 
 function showLoading() {
   const el = document.createElement("div");
-  el.className = "msg ai";
-  el.id = "loading-msg";
-  el.innerHTML = `<div class="label">🤖 AI Assistant</div><div class="answer loading">Thinking</div>`;
+  el.className = "msg ai"; el.id = "loading-msg";
+  el.innerHTML = '<div class="label">📎 AskClippy</div><div class="answer loading">Thinking</div>';
   document.getElementById("messages").appendChild(el);
   el.scrollIntoView({ behavior: "smooth" });
+  clippyThink();
 }
 
 function removeLoading() {
   const el = document.getElementById("loading-msg");
   if (el) el.remove();
+  clippyStop();
+  setTimeout(clippyTap, 300);
 }
 
 async function ask(question) {
@@ -343,16 +483,11 @@ async function send() {
   const btn = document.getElementById("sendBtn");
   const text = input.value.trim();
   if (!text) return;
-
-  // Hide placeholder
   document.getElementById("placeholder").style.display = "none";
-
   addMessage("user", text);
   input.value = "";
   btn.disabled = true;
-
   showLoading();
-
   try {
     const result = await queryAI(text);
     removeLoading();
@@ -361,13 +496,68 @@ async function send() {
     removeLoading();
     addMessage("ai", "⚠️ Error: " + e.message);
   }
-
   btn.disabled = false;
   input.focus();
 }
 
-// ── Init ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  ANIMATED CLIPPY
+// ═══════════════════════════════════════════════════════════
+
+const clippyPhrases = [
+  "It looks like you're trying to find a vulnerability...",
+  "Scanning your assets...",
+  "I know things about endpoints.",
+  "Have you tried asking about critical CVEs?",
+  "I'm not a paperclip, I'm your IT assistant.",
+  "I've read the findings so you don't have to.",
+  "Drop a CSV file to load your scan data.",
+  "I can tell you about compliance too.",
+  "Click me for a suggestion!",
+  "I may be small, but I know your network.",
+];
+
+let clippyTimer = null;
+let clippyBubbleTimer = null;
+
+function initClippy() {
+  setTimeout(() => clippySay("Hi! Upload a scan or ask me about your infrastructure."), 1500);
+}
+
+function clippySay(msg) {
+  const bubble = document.getElementById("clippy-bubble");
+  bubble.textContent = msg;
+  bubble.classList.remove("hidden");
+  clearTimeout(clippyBubbleTimer);
+  clippyBubbleTimer = setTimeout(() => bubble.classList.add("hidden"), 6000);
+}
+
+function clippyThink() {
+  document.getElementById("clippy-corner").classList.add("thinking");
+  clippySay("Let me search my knowledge base...");
+}
+
+function clippyStop() {
+  document.getElementById("clippy-corner").classList.remove("thinking");
+}
+
+function clippyTap() {
+  const el = document.getElementById("clippy-corner");
+  el.classList.add("tapping");
+  setTimeout(() => el.classList.remove("tapping"), 1200);
+}
+
+function clippyRandom() {
+  clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]);
+  clippyTap();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+
 loadKnowledge();
+initClippy();
 </script>
 </body>
 </html>
