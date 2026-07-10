@@ -642,11 +642,23 @@ const clippyPhrases = [
   "We're gonna need a bigger boat. *for this vulnerability backlog*",
 ];
 
+let clippyAutoTimer = null;
 let clippyTimer = null;
 let clippyBubbleTimer = null;
 
 function initClippy() {
   setTimeout(() => clippySay("Hi! Upload a scan or ask me about your infrastructure."), 1500);
+  // Auto-quote rotation every 25-45 seconds
+  scheduleNextAutoQuote();
+}
+
+function scheduleNextAutoQuote() {
+  const delay = 25000 + Math.random() * 20000; // 25-45 seconds
+  if (clippyAutoTimer) clearTimeout(clippyAutoTimer);
+  clippyAutoTimer = setTimeout(() => {
+    clippyRandom();
+    scheduleNextAutoQuote();
+  }, delay);
 }
 
 function clippySay(msg) {
