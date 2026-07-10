@@ -164,6 +164,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
       <div id="ai-mode-display" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
         <div><span id="mode-icon">🔍</span> <span id="mode-label">Local Search</span></div>
         <div style="color:var(--text-muted);margin-top:4px;font-size:11px" id="mode-detail">No AI API configured</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--good)">🌐 <span id="offline-badge">100% offline capable</span></div>
       </div>
     </div>
     <div class="section">
@@ -286,14 +287,17 @@ function updateModeDisplay() {
   const icon = document.getElementById("mode-icon");
   const label = document.getElementById("mode-label");
   const detail = document.getElementById("mode-detail");
+  const offline = document.getElementById("offline-badge");
   if (USE_OLLAMA) {
     icon.textContent = "🧠";
     label.textContent = "Local LLM (" + OLLAMA_MODEL + ")";
-    detail.textContent = "via Ollama at " + OLLAMA_URL;
+    detail.textContent = "via Ollama — fully offline";
+    if (offline) offline.textContent = "✅ No internet required";
   } else {
     icon.textContent = "🔍";
     label.textContent = "Local Search";
     detail.textContent = "Keyword matching on knowledge snapshot";
+    if (offline) offline.textContent = "✅ 100% offline capable";
   }
 }
 
@@ -717,16 +721,31 @@ function clippyShake() {
   setTimeout(() => { el.classList.remove("shake"); el.classList.add("idle"); }, 1500);
 }
 
+// Auto-quote rotation every 10-20 seconds
+function scheduleNextAutoQuote() {
+  const delay = 10000 + Math.random() * 10000;
+  if (clippyAutoTimer) clearTimeout(clippyAutoTimer);
+  clippyAutoTimer = setTimeout(() => {
+    clippyRandom();
+    scheduleNextAutoQuote();
+  }, delay);
+}
+
 function clippyRandom() {
-  const moods = [
-    () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyTap(); },
-    () => { clippySay("Hmm, that's a tough one..."); clippyConfused(); },
-    () => { clippySay("I know this one! I know this one!"); clippyCelebrate(); },
-    () => { clippySay("Your infrastructure is looking good today!"); clippyCelebrate(); },
-    () => { clippySay("No, don't ask me that..."); clippyShake(); },
-    () => { clippySay("Beep boop. Processing. Please wait."); clippyTap(); },
-  ];
-  moods[Math.floor(Math.random() * moods.length)]();
+  const doMood = Math.random() < 0.8;
+  if (doMood) {
+    const moods = [
+      () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyTap(); },
+      () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyConfused(); },
+      () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyCelebrate(); },
+      () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyShake(); },
+      () => { clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]); clippyTap(); },
+    ];
+    moods[Math.floor(Math.random() * moods.length)]();
+  } else {
+    clippySay(clippyPhrases[Math.floor(Math.random() * clippyPhrases.length)]);
+    clippyTap();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
