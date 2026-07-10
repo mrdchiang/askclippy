@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AskClippy — Ask Your Infrastructure</title>
+<style>
+:root {
+  --bg: #060b18; --surface: #0c1225; --elevated: #111830;
+  --border: #1a2540; --text: #e8ecf4; --text-sec: #8899bb; --text-muted: #556888;
+  --accent: #0066ff; --accent-glow: rgba(0,102,255,0.25);
+  --critical: #ff4444; --high: #ff7722; --medium: #e6b800; --good: #22cc66;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", "Fira Code", Consolas, monospace;
+  --radius: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);display:flex;flex-direction:column}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.header .logo{width:32px;height:32px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px}
+.header h1{font-size:18px;font-weight:700}
+.header .sub{color:var(--text-muted);font-size:12px;margin-left:auto}
+.main{flex:1;display:flex;overflow:hidden}
+.sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);padding:16px;overflow-y:auto;flex-shrink:0}
+.sidebar h3{font-size:12px;text-transform:uppercase;color:var(--text-muted);letter-spacing:.05em;margin-bottom:8px}
+.sidebar .stat{background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.sidebar .stat .val{font-size:20px;font-weight:700}
+.sidebar .stat .lbl{font-size:11px;color:var(--text-muted)}
+.sidebar .section{margin-bottom:16px}
+.chat-area{flex:1;display:flex;flex-direction:column}
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:85%;padding:14px 18px;border-radius:var(--radius);line-height:1.6;font-size:14px}
+.msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.ai{background:var(--elevated);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.ai .label{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.msg.ai .answer{white-space:pre-wrap}
+.msg.ai .sources{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text-sec)}
+.msg.ai .sources .src{display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin:2px;font-size:11px;font-family:var(--mono)}
+.placeholder{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.placeholder .icon{font-size:48px;margin-bottom:12px}
+.placeholder h2{color:var(--text-sec);font-size:18px;margin-bottom:8px}
+.placeholder .examples{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.placeholder .examples button{background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-sec);padding:8px 14px;font-size:13px;cursor:pointer;transition:all .15s}
+.placeholder .examples button:hover{border-color:var(--accent);color:var(--text);background:var(--bg-hover,var(--elevated))}
+.input-area{background:var(--surface);border-top:1px solid var(--border);padding:16px 24px;display:flex;gap:12px;flex-shrink:0}
+.input-area input{flex:1;background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:12px 16px;font-size:14px;font-family:inherit}
+.input-area input:focus{outline:none;border-color:var(--accent)}
+.input-area button{background:var(--accent);border:none;border-radius:var(--radius);color:#fff;padding:12px 20px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s}
+.input-area button:hover{background:var(--accent-dim,#0052cc)}
+.input-area button:disabled{opacity:0.5;cursor:not-allowed}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600}
+.badge-crit{background:#351520;color:var(--critical)}
+.badge-high{background:#352215;color:var(--high)}
+.badge-med{background:#353015;color:var(--medium)}
+.badge-good{background:#123020;color:var(--good)}
+.loading::after{content:"...";animation:dots 1.5s infinite}
+@keyframes dots{0%,20%{content:"."}40%{content:".."}60%,100%{content:"..."}}
+@media(max-width:768px){.sidebar{display:none}.msg{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">🗄️</div>
+  <h1>AskClippy</h1>
+  <span class="sub">Ask your infrastructure anything</span>
+</div>
+<div class="main">
+  <div class="sidebar" id="sidebar">
+    <div class="section">
+      <h3>Environment</h3>
+      <div class="stat"><div class="val" id="stat-assets">—</div><div class="lbl">Assets</div></div>
+      <div class="stat"><div class="val" id="stat-findings">—</div><div class="lbl">Active Findings</div></div>
+      <div class="stat"><div class="val" id="stat-cves">—</div><div class="lbl">CVEs</div></div>
+      <div class="stat"><div class="val" id="stat-health">—</div><div class="lbl">Endpoint Health</div></div>
+      <div class="stat"><div class="val" id="stat-gpo">—</div><div class="lbl">GPO Compliance</div></div>
+    </div>
+    <div class="section">
+      <h3>About</h3>
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.5">
+        Knowledge snapshot from your vulnerability management tools.
+        Ask about assets, CVEs, compliance, teams, or remediation status.
+      </p>
+    </div>
+  </div>
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="placeholder" id="placeholder">
+        <div class="icon">🔍</div>
+        <h2>Ask about your VM data</h2>
+        <p style="color:var(--text-muted)">Natural language queries about your infrastructure</p>
+        <div class="examples">
+          <button onclick="ask('Which assets have critical KEV vulnerabilities?')">Critical KEV CVEs</button>
+          <button onclick="ask('Show me the health status of all domain controllers')">DC health</button>
+          <button onclick="ask('What is our GPO compliance rate?')">GPO compliance</button>
+          <button onclick="ask('Which CVEs are exploited in the wild?')">Exploited CVEs</button>
+          <button onclick="ask('Executive summary of our security posture')">Executive summary</button>
+          <button onclick="ask('List assets with poor health scores')">Unhealthy assets</button>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <input id="input" type="text" placeholder="Ask about your environment..." onkeydown="if(event.key==='Enter')send()">
+      <button id="sendBtn" onclick="send()">Ask</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Configuration ──────────────────────────────────────────
+const KNOWLEDGE_PATH = "knowledge-snapshot.md";
+const USE_AI_API = false; // Set true when you have a Bedrock/OpenAI API endpoint
+const AI_API_URL = "";    // e.g. "https://your-api.com/chat"
+const AI_API_KEY = "";
+
+let knowledge = "";  // raw markdown knowledge
+let messages = [];
+
+// ── Load knowledge ─────────────────────────────────────────
+async function loadKnowledge() {
+  try {
+    const resp = await fetch(KNOWLEDGE_PATH);
+    if (!resp.ok) throw new Error("Not found");
+    knowledge = await resp.text();
+    console.log(`Loaded knowledge (${knowledge.length} chars)`);
+    // Update sidebar
+    extractStats(knowledge);
+  } catch(e) {
+    console.warn("No knowledge file found, using fallback");
+    knowledge = "Environment knowledge not loaded.";
+  }
+}
+
+function extractStats(md) {
+  const mAssets = md.match(/(\d+) assets/);
+  const mFindings = md.match(/· (\d+) active/);
+  const mCVEs = md.match(/(\d+) CVEs/);
+  const mHealth = md.match(/health: (\d+)%/);
+  const mGPO = md.match(/GPO compliance: (\d+)%/);
+
+  if (mAssets) document.getElementById("stat-assets").textContent = mAssets[1];
+  if (mFindings) document.getElementById("stat-findings").textContent = mFindings[1];
+  if (mCVEs) document.getElementById("stat-cves").textContent = mCVEs[1];
+  if (mHealth) document.getElementById("stat-health").textContent = mHealth[1] + "%";
+  if (mGPO) document.getElementById("stat-gpo").textContent = mGPO[1] + "%";
+}
+
+// ── Query AI ───────────────────────────────────────────────
+async function queryAI(userQuestion) {
+  if (USE_AI_API && AI_API_URL) {
+    try {
+      const resp = await fetch(AI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + AI_API_KEY,
+        },
+        body: JSON.stringify({
+          question: userQuestion,
+          context: knowledge,
+          model: "claude-sonnet-4",
+        }),
+      });
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      const data = await resp.json();
+      return { answer: data.answer || data.response || JSON.stringify(data), sources: data.sources || [] };
+    } catch(e) {
+      return { answer: `⚠️ AI API error: ${e.message}. Falling back to local search.`, sources: [] };
+    }
+  }
+
+  // ── Local search (no AI API needed) ─────────────────────
+  return localSearch(userQuestion);
+}
+
+function localSearch(question) {
+  const q = question.toLowerCase();
+  let answer = "";
+  let sources = [];
+
+  // Check for key terms and build answer from knowledge
+  const lines = knowledge.split("\n");
+
+  if (q.includes("critical") && (q.includes("kev") || q.includes("exploit"))) {
+    // Find Critical KEV CVEs section
+    const capture = captureSection(lines, "Critical KEV CVEs", "All Active CVEs");
+    if (capture) {
+      answer = "**Critical KEV CVEs:**\n" + capture.join("\n");
+      sources = capture.map(l => l.replace(/^-\s*/, "").split("|")[0].trim()).filter(Boolean);
+    }
+  }
+  else if (q.includes("health") || q.includes("unhealthy") || q.includes("dc") || q.includes("domain controller")) {
+    const capture = captureSection(lines, "Assets With Critical Findings", "All Assets");
+    const dcAssets = (capture || []).filter(l => l.toLowerCase().includes("dc-"));
+    if (dcAssets.length > 0 && (q.includes("dc") || q.includes("domain"))) {
+      answer = "**Domain Controller Health:**\n" + dcAssets.join("\n");
+      sources = dcAssets.map(l => l.match(/^-\s*(\S+)/)?.[1]).filter(Boolean);
+    } else if (capture) {
+      const unhealthy = capture.filter(l => l.includes("Health:") && parseInt(l.match(/Health:\s*(\d+)/)?.[1] || "100") < 70);
+      if (unhealthy.length > 0) {
+        answer = "**Assets with poor health (< 70%):**\n" + unhealthy.join("\n");
+      } else {
+        answer = "**Assets with critical findings:**\n" + capture.join("\n");
+      }
+      sources = capture.map(l => l.match(/^-\s*(\S+)/)?.[1]).filter(Boolean);
+    }
+  }
+  else if (q.includes("gpo") || q.includes("compliance")) {
+    const capture = captureSection(lines, "Compliance", "Activity");
+    if (capture) answer = "**Compliance Summary:**\n" + capture.join("\n");
+  }
+  else if (q.includes("executive") || q.includes("summary") || q.includes("overview") || q.includes("posture")) {
+    const overview = captureSection(lines, "Overview", "Compliance");
+    const activity = captureSection(lines, "Activity", "Critical KEV CVEs");
+    const parts = [];
+    if (overview) parts.push("**Overview:**\n" + overview.join("\n"));
+    if (activity) parts.push("**Activity:**\n" + activity.join("\n"));
+    answer = parts.join("\n\n");
+  }
+  else if (q.includes("cve") || q.includes("vulnerability")) {
+    // Search for specific CVE
+    const cveMatch = q.match(/cve[-\s]*(\d{4}[-\s]*\d+)/i);
+    if (cveMatch) {
+      const cveId = "CVE-" + cveMatch[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
+      const cveLines = lines.filter(l => l.includes(cveId));
+      if (cveLines.length > 0) {
+        answer = "**" + cveId + ":**\n" + cveLines.join("\n");
+        sources = [cveId];
+      }
+    }
+    if (!answer) {
+      const allCves = captureSection(lines, "All Active CVEs", "Assets With Critical Findings");
+      if (allCves) {
+        // Filter by severity if asked
+        if (q.includes("critical")) {
+          const crit = allCves.filter(l => l.includes("Critical"));
+          answer = "**Critical CVEs (" + crit.length + "):**\n" + crit.slice(0, 10).join("\n");
+          if (crit.length > 10) answer += "\n...and " + (crit.length - 10) + " more";
+        } else {
+          answer = "**All Active CVEs (" + allCves.length + "):**\n" + allCves.slice(0, 15).join("\n");
+          if (allCves.length > 15) answer += "\n...and " + (allCves.length - 15) + " more";
+        }
+      }
+    }
+  }
+  else if (q.includes("team") || q.includes("infrastructure") || q.includes("platform")) {
+    const teams = captureSection(lines, "Team Health", "Critical KEV CVEs");
+    if (teams && teams.length > 0) {
+      answer = "**Team Health:**\n" + teams.join("\n");
+    }
+  }
+  else if (q.includes("asset") || q.includes("endpoint") || q.includes("machine") || q.includes("host")) {
+    // Search for specific hostname
+    const hostMatch = q.match(/([A-Z0-9]+(?:-PROD|-[A-Z]+-\d+))/i);
+    if (hostMatch) {
+      const hn = hostMatch[1].toUpperCase();
+      const assetLines = lines.filter(l => l.includes(hn) && l.startsWith("- "));
+      if (assetLines.length > 0) {
+        answer = "**" + hn + ":**\n" + assetLines.join("\n");
+        sources = [hn];
+      }
+    }
+    if (!answer) {
+      const allAssets = captureSection(lines, "All Assets", null);
+      if (allAssets) {
+        answer = "**All Assets (" + allAssets.length + "):**\n" + allAssets.slice(0, 10).join("\n");
+        if (allAssets.length > 10) answer += "\n...and " + (allAssets.length - 10) + " more";
+      }
+    }
+  }
+  else if (q.includes("remediation") || q.includes("deploy")) {
+    const activity = captureSection(lines, "Activity", "Critical KEV CVEs");
+    if (activity) answer = "**Remediation Activity:**\n" + activity.join("\n");
+  }
+
+  if (!answer) {
+    answer = "I couldn't find a specific match for your question. Try:\n"
+      + "- \"Which assets have critical KEV vulnerabilities?\"\n"
+      + "- \"Show me health status of domain controllers\"\n"
+      + "- \"What is our GPO compliance rate?\"\n"
+      + "- \"Executive summary of our security posture\"\n"
+      + "- \"Tell me about CVE-2026-10011\"\n"
+      + "- \"List all critical CVEs\"\n"
+      + "- \"How is the infrastructure team doing?\"";
+  }
+
+  return { answer, sources };
+}
+
+function captureSection(lines, startLabel, endLabel) {
+  let capturing = false;
+  let captured = [];
+  for (const line of lines) {
+    if (line.startsWith("## ") && line.includes(startLabel)) {
+      capturing = true;
+      continue;
+    }
+    if (capturing && endLabel && line.startsWith("## ") && line.includes(endLabel)) break;
+    if (capturing && line.startsWith("- ")) captured.push(line);
+  }
+  return captured.length > 0 ? captured : null;
+}
+
+// ── Chat UI ────────────────────────────────────────────────
+function addMessage(role, content, sources) {
+  const el = document.createElement("div");
+  el.className = "msg " + role;
+
+  if (role === "user") {
+    el.textContent = content;
+  } else {
+    el.innerHTML = `<div class="label">🤖 AI Assistant</div><div class="answer">${content}</div>`;
+    if (sources && sources.length > 0) {
+      el.innerHTML += `<div class="sources">Sources: ${sources.map(s => `<span class="src">${s}</span>`).join(" ")}</div>`;
+    }
+  }
+
+  document.getElementById("messages").appendChild(el);
+  el.scrollIntoView({ behavior: "smooth" });
+}
+
+function showLoading() {
+  const el = document.createElement("div");
+  el.className = "msg ai";
+  el.id = "loading-msg";
+  el.innerHTML = `<div class="label">🤖 AI Assistant</div><div class="answer loading">Thinking</div>`;
+  document.getElementById("messages").appendChild(el);
+  el.scrollIntoView({ behavior: "smooth" });
+}
+
+function removeLoading() {
+  const el = document.getElementById("loading-msg");
+  if (el) el.remove();
+}
+
+async function ask(question) {
+  document.getElementById("input").value = question;
+  await send();
+}
+
+async function send() {
+  const input = document.getElementById("input");
+  const btn = document.getElementById("sendBtn");
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Hide placeholder
+  document.getElementById("placeholder").style.display = "none";
+
+  addMessage("user", text);
+  input.value = "";
+  btn.disabled = true;
+
+  showLoading();
+
+  try {
+    const result = await queryAI(text);
+    removeLoading();
+    addMessage("ai", result.answer, result.sources);
+  } catch(e) {
+    removeLoading();
+    addMessage("ai", "⚠️ Error: " + e.message);
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+// ── Init ───────────────────────────────────────────────────
+loadKnowledge();
+</script>
+</body>
+</html>
