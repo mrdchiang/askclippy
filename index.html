@@ -123,7 +123,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .clippy-corner.thinking .clippy-arms{animation:clippy-wave 0.4s ease-in-out infinite alternate}
 @keyframes clippy-wave{from{transform:rotate(-25deg) translateX(-4px)}to{transform:rotate(-10deg) translateX(-2px)}}
 .clippy-corner.excited .clippy-arms{animation:clippy-flail 0.15s ease-in-out 10}
-@keyframes clippy-flail{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-30deg)}75%{transform:rotate(20deg)}}
+@keyframes clippy-flail{0%,100%{transform:translateY(0)}25%{transform:translateY(-8px)}75%{transform:translateY(4px)}}
 .clippy-corner.celebrate .clippy-arms{animation:clippy-cheer 0.2s ease-in-out infinite}
 @keyframes clippy-cheer{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .clippy-torso{transition:all .3s}
@@ -132,8 +132,8 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .clippy-legs{transition:all .2s}
 .clippy-corner.excited .clippy-legs{animation:clippy-jump 0.15s ease-in-out 8}
 @keyframes clippy-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.clippy-corner.celebrate .clippy-legs{animation:clippy-kick 0.2s ease-in-out infinite}
-@keyframes clippy-kick{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
+.clippy-corner.celebrate .clippy-legs{animation:clippy-kick 0.3s ease-in-out infinite}
+@keyframes clippy-kick{0%,100%{transform:translateY(0) translateX(0)}25%{transform:translateY(-3px) translateX(4px)}75%{transform:translateY(-2px) translateX(-4px)}}
 .clippy-sparkles{position:absolute;top:-8px;left:50%;transform:translateX(-50%);pointer-events:none;font-size:20px;opacity:0;transition:opacity .3s}
 .clippy-corner.excited .clippy-sparkles{opacity:1;animation:sparkle-burst 0.8s ease-out forwards}
 .clippy-corner.celebrate .clippy-sparkles{opacity:1;animation:sparkle-rain 0.5s linear infinite}
