@@ -93,6 +93,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 
 /* ── Celebrate: super bounce + glow ── */
 .clippy-corner.celebrate{animation:clippy-bounce-happy 0.2s ease-in-out 8}
+/* ── Speech bubble ── */
+.clippy-bubble{position:fixed;bottom:230px;right:40px;background:var(--elevated);border:1px solid var(--accent);border-radius:16px 16px 16px 4px;padding:14px 20px;font-size:14px;max-width:320px;color:var(--text);z-index:999;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 30px var(--accent-glow);transition:all .4s cubic-bezier(0.34,1.56,0.64,1);line-height:1.6;font-weight:500}
+.clippy-bubble.hidden{opacity:0;pointer-events:none;transform:translateY(20px) scale(0.85)}
+.clippy-bubble:not(.hidden){animation:clippy-bubble-pop 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes clippy-bubble-pop{0%{opacity:0;transform:translateY(16px) scale(0.7)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
 /* ── Bigger on desktop ── */
 @media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:110px;height:110px}.clippy-bubble{font-size:15px;max-width:360px}}
 
