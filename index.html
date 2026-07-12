@@ -524,9 +524,26 @@ function addMessage(role, content, sources) {
   if (role === "user") {
     el.textContent = content;
   } else {
-    el.innerHTML = '<div class="label">📎 AskClippy</div><div class="answer">' + content + "</div>";
+    // Sanitize: escape HTML entities to prevent XSS from uploaded CSV/JSON data
+    const safe = content.replace(/[&<>"']/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      if (m === '"') return '&quot;';
+      if (m === "'") return '&#39;';
+      return m;
+    });
+    el.innerHTML = '<div class="label">📎 AskClippy</div><div class="answer">' + safe + "</div>";
     if (sources && sources.length > 0) {
-      el.innerHTML += '<div class="sources">Sources: ' + sources.map(s => '<span class="src">' + s + "</span>").join(" ") + "</div>";
+      const safeSources = sources.map(s => '<span class="src">' + s.replace(/[&<>"']/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        if (m === "'") return '&#39;';
+        return m;
+      }) + "</span>").join(" ");
+      el.innerHTML += '<div class="sources">Sources: ' + safeSources + "</div>";
     }
   }
   document.getElementById("messages").appendChild(el);
@@ -719,16 +736,6 @@ function clippyShake() {
   el.classList.remove("idle", "thinking", "excited", "confused", "sad", "celebrate");
   el.classList.add("shake");
   setTimeout(() => { el.classList.remove("shake"); el.classList.add("idle"); }, 1500);
-}
-
-// Auto-quote rotation every 10-20 seconds
-function scheduleNextAutoQuote() {
-  const delay = 10000 + Math.random() * 10000;
-  if (clippyAutoTimer) clearTimeout(clippyAutoTimer);
-  clippyAutoTimer = setTimeout(() => {
-    clippyRandom();
-    scheduleNextAutoQuote();
-  }, delay);
 }
 
 function clippyRandom() {
