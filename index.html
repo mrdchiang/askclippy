@@ -64,87 +64,48 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .badge-good{background:#123020;color:var(--good)}
 
 /* ── Animated Clippy ───────────────────────────────────── */
-.clippy-corner{position:fixed;bottom:120px;right:40px;z-index:1000;cursor:pointer;transition:all .3s;opacity:0.9}
-.clippy-corner:hover{transform:scale(1.25);opacity:1;filter:drop-shadow(0 0 30px var(--accent-glow))}
-.clippy-corner.thinking{animation:clippy-bounce 0.35s ease-in-out infinite alternate}
-@keyframes clippy-bounce{from{transform:translateY(0) scale(1) rotate(0deg)}to{transform:translateY(-18px) scale(1.1) rotate(2deg)}}
-.clippy-corner.idle{animation:clippy-idle 3s ease-in-out infinite}
-@keyframes clippy-idle{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-4px) rotate(-1deg)}50%{transform:translateY(0) rotate(0deg)}75%{transform:translateY(-2px) rotate(1deg)}}
-.clippy-corner.hidden{opacity:0;pointer-events:none;transform:translateY(40px) scale(0.3) rotate(20deg)}
-.clippy-corner.excited{animation:clippy-excited 0.25s ease-in-out 5}
-@keyframes clippy-excited{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}20%{transform:translateY(-12px) rotate(-6deg) scale(1.1)}40%{transform:translateY(-6px) rotate(4deg) scale(1.05)}60%{transform:translateY(-14px) rotate(-3deg) scale(1.12)}80%{transform:translateY(-4px) rotate(2deg) scale(1.03)}}
-.clippy-corner.confused{animation:clippy-confused 0.6s ease-in-out 2}
-@keyframes clippy-confused{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px) rotate(-4deg)}75%{transform:translateX(8px) rotate(4deg)}}
-.clippy-corner.sad{animation:clippy-sad 0.8s ease-in-out 2}
-@keyframes clippy-sad{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(6px) scale(0.95)}}
-.clippy-corner.celebrate{animation:clippy-celebrate 0.2s ease-in-out 8}
-@keyframes clippy-celebrate{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) scale(1.15)}}
-.clippy-corner.shake{animation:clippy-shake 0.15s ease-in-out 6}
-@keyframes clippy-shake{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
-.clippy-glow{position:absolute;top:-20px;left:-20px;width:104px;height:104px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity .3s;filter:blur(20px)}
-.clippy-corner.thinking .clippy-glow{opacity:0.5;animation:glow-pulse 0.6s ease-in-out infinite alternate}
-.clippy-corner.excited .clippy-glow{opacity:0.7}
-.clippy-corner.celebrate .clippy-glow{opacity:0.6;animation:glow-rainbow 0.3s linear infinite}
-@keyframes glow-pulse{from{opacity:0.2;transform:scale(0.8)}to{opacity:0.6;transform:scale(1.3)}}
-@keyframes glow-rainbow{0%{background:var(--accent)}25%{background:var(--good)}50%{background:var(--medium)}75%{background:var(--high)}100%{background:var(--accent)}}
-.clippy-bubble{position:fixed;bottom:230px;right:40px;background:var(--elevated);border:1px solid var(--accent);border-radius:16px 16px 16px 4px;padding:14px 20px;font-size:14px;max-width:320px;color:var(--text);z-index:999;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 30px var(--accent-glow);transition:all .4s cubic-bezier(0.34,1.56,0.64,1);line-height:1.6;font-weight:500}
-.clippy-bubble.hidden{opacity:0;pointer-events:none;transform:translateY(20px) scale(0.85)}
-.clippy-svg{width:80px;height:80px;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));position:relative;z-index:1}
-.clippy-eyes{transition:all .15s}
-.clippy-brows{transition:all .2s}
-.clippy-corner.idle .clippy-brows{animation:clippy-brow-idle 3s ease-in-out infinite}
-@keyframes clippy-brow-idle{0%,100%{opacity:0.6}50%{opacity:0.4}}
-.clippy-corner.confused .clippy-brows{animation:clippy-brow-confused 0.5s ease-in-out 4}
-@keyframes clippy-brow-confused{0%,100%{d:path("M27 20 Q33 17 39 20")}50%{d:path("M26 16 Q33 22 39 16")}}
-.clippy-corner.sad .clippy-brows{animation:clippy-brow-sad 0.8s ease-in-out 2}
-@keyframes clippy-brow-sad{0%,100%{d:path("M27 20 Q33 17 39 20")}50%{d:path("M28 23 Q33 20 38 23")}}
-.clippy-corner.celebrate .clippy-brows{animation:clippy-brow-happy 0.3s ease-in-out infinite alternate}
-@keyframes clippy-brow-happy{from{d:path("M27 20 Q33 17 39 20")}to{d:path("M27 16 Q33 13 39 16")}}
-.clippy-corner.idle .clippy-eyes{animation:clippy-blink 2.5s infinite}
-@keyframes clippy-blink{0%,90%,100%{ry:7}92%{ry:1}94%{ry:7}96%{ry:2}98%{ry:7}}
-.clippy-corner.thinking .clippy-eyes{animation:clippy-scan 0.6s ease-in-out infinite alternate}
-@keyframes clippy-scan{from{transform:translateX(0)}to{transform:translateX(10px)}}
-.clippy-corner.confused .clippy-eyes{animation:clippy-cross 0.5s ease-in-out 4}
-@keyframes clippy-cross{0%,100%{ry:7}50%{ry:1}}
-.clippy-corner.sad .clippy-eyes{animation:clippy-sad-eyes 0.8s ease-in-out 2}
-@keyframes clippy-sad-eyes{0%,100%{ry:7;transform:translateY(0)}50%{ry:3;transform:translateY(3px)}}
-.clippy-corner.celebrate .clippy-eyes{animation:clippy-happy 0.3s ease-in-out infinite alternate}
-@keyframes clippy-happy{from{transform:translateY(0) scaleY(1)}to{transform:translateY(-2px) scaleY(0.6)}}
-.clippy-mouth{transition:all .2s}
-.clippy-corner.thinking .clippy-mouth{animation:clippy-talk 0.25s ease-in-out infinite alternate}
-@keyframes clippy-talk{from{opacity:0.4;transform:scaleY(0.8)}to{opacity:1;transform:scaleY(1.2)}}
-.clippy-corner.celebrate .clippy-mouth{animation:clippy-smile 0.3s ease-in-out infinite alternate}
-@keyframes clippy-smile{from{d:path("M27 30 Q32 38 37 30")}to{d:path("M25 28 Q32 40 39 28")}}
-.clippy-corner.sad .clippy-mouth{animation:clippy-frown 0.5s ease-in-out 2}
-@keyframes clippy-frown{0%,100%{d:path("M27 30 Q32 26 37 30")}50%{d:path("M27 26 Q32 22 37 26")}}
-.clippy-arms{transition:all .2s}
-.clippy-corner.idle .clippy-arms{animation:clippy-dangle 3s ease-in-out infinite}
-@keyframes clippy-dangle{0%,100%{transform:rotate(0deg)}30%{transform:rotate(-5deg)}60%{transform:rotate(3deg)}}
-.clippy-corner.thinking .clippy-arms{animation:clippy-wave 0.4s ease-in-out infinite alternate}
-@keyframes clippy-wave{from{transform:rotate(-25deg) translateX(-4px)}to{transform:rotate(-10deg) translateX(-2px)}}
-.clippy-corner.excited .clippy-arms{animation:clippy-flail 0.15s ease-in-out 10}
-@keyframes clippy-flail{0%,100%{transform:translateY(0)}25%{transform:translateY(-8px)}75%{transform:translateY(4px)}}
-.clippy-corner.celebrate .clippy-arms{animation:clippy-cheer 0.2s ease-in-out infinite}
-@keyframes clippy-cheer{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.clippy-torso{transition:all .3s}
-.clippy-corner.thinking .clippy-torso{animation:clippy-sway 0.8s ease-in-out infinite alternate}
-@keyframes clippy-sway{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
-.clippy-legs{transition:all .2s}
-.clippy-corner.excited .clippy-legs{animation:clippy-jump 0.15s ease-in-out 8}
-@keyframes clippy-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.clippy-corner.celebrate .clippy-legs{animation:clippy-kick 0.3s ease-in-out infinite}
-@keyframes clippy-kick{0%,100%{transform:translateY(0) translateX(0)}25%{transform:translateY(-3px) translateX(4px)}75%{transform:translateY(-2px) translateX(-4px)}}
-.clippy-sparkles{position:absolute;top:-8px;left:50%;transform:translateX(-50%);pointer-events:none;font-size:20px;opacity:0;transition:opacity .3s}
-.clippy-corner.excited .clippy-sparkles{opacity:1;animation:sparkle-burst 0.8s ease-out forwards}
-.clippy-corner.celebrate .clippy-sparkles{opacity:1;animation:sparkle-rain 0.5s linear infinite}
-@keyframes sparkle-burst{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.5)}30%{opacity:1;transform:translateX(-50%) translateY(-30px) scale(1.2)}100%{opacity:0;transform:translateX(-50%) translateY(-50px) scale(0.8)}}
-@keyframes sparkle-rain{0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(0.5)}20%{opacity:1;transform:translateX(-30%) translateY(-25px) scale(1)}40%{opacity:1;transform:translateX(-70%) translateY(-40px) scale(0.8)}60%{opacity:0.5;transform:translateX(-20%) translateY(-55px) scale(0.6)}100%{opacity:0;transform:translateX(-50%) translateY(-70px) scale(0.3)}}
-.clippy-dropsweat{position:absolute;top:0;right:0;font-size:18px;opacity:0;transition:opacity .3s}
-.clippy-corner.confused .clippy-dropsweat{opacity:1;animation:sweat-drop 0.8s ease-in-out infinite}
-.clippy-corner.sad .clippy-dropsweat{opacity:1}
-@keyframes sweat-drop{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(4px) rotate(10deg)}}
+.clippy-corner{position:fixed;bottom:120px;right:40px;z-index:1000;cursor:pointer;opacity:0.92;filter:drop-shadow(0 0 20px rgba(0,102,255,0.15))}
 
-@media(max-width:768px){
+/* ── Hover ── */
+.clippy-corner:hover{filter:drop-shadow(0 0 40px var(--accent-glow)) brightness(1.15);opacity:1}
+.clippy-corner:hover .clippy-svg{transform:scale(1.1);transition:transform .2s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* ── Floating idle (smooth bob + shadow pulse) ── */
+.clippy-corner.idle{animation:clippy-float 3s ease-in-out infinite}
+@keyframes clippy-float{0%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}60%{transform:translateY(-3px)}}
+
+/* ── Thinking: frantic bounce + color pulse ── */
+.clippy-corner.thinking{animation:clippy-think 0.3s ease-in-out infinite alternate}
+@keyframes clippy-think{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-16px) scale(1.08)}}
+.clippy-corner.thinking .clippy-glow{opacity:0.5;animation:glow-pulse 0.4s ease-in-out infinite alternate}
+
+/* ── Excited: rapid fire wiggle ── */
+.clippy-corner.excited{animation:clippy-excite 0.15s ease-in-out 10}
+@keyframes clippy-excite{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-10px) scale(1.12) rotate(-4deg)}50%{transform:translateY(-4px) scale(1.05)}75%{transform:translateY(-14px) scale(1.15) rotate(3deg)}}
+
+/* ── Confused: head tilt + wobble ── */
+.clippy-corner.confused{animation:clippy-wobble 0.5s ease-in-out 3}
+@keyframes clippy-wobble{0%,100%{transform:translateX(0) rotate(0deg)}20%{transform:translateX(-6px) rotate(-5deg)}40%{transform:translateX(6px) rotate(4deg)}60%{transform:translateX(-4px) rotate(-3deg)}80%{transform:translateX(4px) rotate(2deg)}}
+
+/* ── Sad: droop ── */
+.clippy-corner.sad{animation:clippy-droop 0.8s ease-in-out 2}
+@keyframes clippy-droop{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(8px) scale(0.93)}}
+
+/* ── Celebrate: super bounce + glow ── */
+.clippy-corner.celebrate{animation:clippy-bounce-happy 0.2s ease-in-out 8}
+/* ── Bigger on desktop ── */
+@media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:110px;height:110px}.clippy-bubble{font-size:15px;max-width:360px}}
+
+/* ── Mobile ── */
+.clippy-corner{cursor:grab}.clippy-corner:active{cursor:grabbing}.clippy-corner.dragging{transition:none!important;opacity:0.8}
+.clippy-corner.dramatic{animation:clippy-dramatic 0.8s ease-in-out 1}
+@keyframes clippy-dramatic{0%{transform:scale(1) rotate(0deg)}15%{transform:scale(1.3) rotate(-10deg) translateY(-20px)}30%{transform:scale(1.4) rotate(5deg) translateY(-30px)}50%{transform:scale(1.5) rotate(0deg) translateY(-40px)}70%{transform:scale(1.3) rotate(-5deg) translateY(-20px)}100%{transform:scale(1) rotate(0deg) translateY(0)}}
+.clippy-corner.stretch{animation:clippy-stretch 1.5s ease-in-out 1}
+@keyframes clippy-stretch{0%{transform:scale(0.3) translateY(40px) rotate(10deg);opacity:0}30%{transform:scale(0.8) translateY(-10px) rotate(-3deg);opacity:0.8}50%{transform:scale(1.15) translateY(-5px) rotate(1deg);opacity:1}70%{transform:scale(0.95) translateY(2px) rotate(0deg)}100%{transform:scale(1) translateY(0) rotate(0deg)}}
+.clippy-corner.dramatic .clippy-svg{filter:drop-shadow(0 0 30px var(--accent-glow)) brightness(1.3)}
+.clippy-corner:hover .clippy-float-tip{opacity:1;transform:translateY(-10px)}
+.clippy-float-tip{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:var(--elevated);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;font-size:11px;color:var(--text);white-space:nowrap;opacity:0;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
+.clippy-float-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent)}@media(max-width:768px){
   .sidebar{display:none}
   .msg{max-width:100%}
   .clippy-corner{bottom:100px;right:10px;transform:scale(0.55)}
@@ -152,61 +113,6 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   .clippy-bubble{bottom:170px;right:10px;max-width:230px;font-size:12px}
 }
 
-/* ═══ CLIPPY UPGRADE: Particles, drag, confetti, hover ═══ */
-
-/* ── Bigger Clippy on desktop ── */
-.clippy-svg{width:100px;height:100px;filter:drop-shadow(0 8px 16px rgba(0,0,0,0.5));position:relative;z-index:1;transition:all .3s}
-@media(max-width:768px){.clippy-svg{width:55px;height:55px}}
-
-/* ── Shadow that moves with floating ── */
-.clippy-shadow{transition:all .3s}
-.clippy-corner.idle .clippy-shadow{animation:shadow-pulse 3s ease-in-out infinite}
-@keyframes shadow-pulse{0%,100%{rx:20;ry:4;opacity:0.25}50%{rx:16;ry:3;opacity:0.15}}
-.clippy-corner.excited .clippy-shadow{animation:shadow-pulse 0.25s ease-in-out 5}
-.clippy-corner.celebrate .clippy-shadow{animation:shadow-pulse 0.2s ease-in-out 8}
-
-/* ── Floating sparkles around Clippy ── */
-.clippy-sparkles{position:absolute;top:-8px;left:50%;transform:translateX(-50%);pointer-events:none;font-size:20px;opacity:0;transition:opacity .3s}
-.clippy-corner.idle .clippy-sparkles{opacity:0.15;animation:sparkle-drift 4s ease-in-out infinite}
-.clippy-corner.excited .clippy-sparkles{opacity:1;animation:sparkle-burst 0.8s ease-out forwards}
-.clippy-corner.celebrate .clippy-sparkles{opacity:1;animation:sparkle-rain 0.5s linear infinite}
-@keyframes sparkle-drift{0%,100%{opacity:0;transform:translateX(-50%) translateY(0)}20%{opacity:0.2;transform:translateX(-40%) translateY(-15px)}40%{opacity:0.15;transform:translateX(-60%) translateY(-30px)}60%{opacity:0.1;transform:translateX(-35%) translateY(-45px)}80%{opacity:0.05;transform:translateX(-55%) translateY(-55px)}}
-@keyframes sparkle-burst{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.5)}30%{opacity:1;transform:translateX(-50%) translateY(-30px) scale(1.2)}100%{opacity:0;transform:translateX(-50%) translateY(-50px) scale(0.8)}}
-@keyframes sparkle-rain{0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(0.5)}20%{opacity:1;transform:translateX(-30%) translateY(-25px) scale(1)}40%{opacity:1;transform:translateX(-70%) translateY(-40px) scale(0.8)}60%{opacity:0.5;transform:translateX(-20%) translateY(-55px) scale(0.6)}100%{opacity:0;transform:translateX(-50%) translateY(-70px) scale(0.3)}}
-
-/* ── Confetti particles (burst on celebrate) ── */
-.clippy-confetti{position:absolute;top:-10px;left:50%;pointer-events:none;z-index:999;opacity:0}
-.clippy-corner.celebrate .clippy-confetti{opacity:1}
-.confetti-piece{position:absolute;width:6px;height:6px;border-radius:2px;animation:confetti-fall 1s ease-out forwards}
-@keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(80px) rotate(720deg) scale(0.3);opacity:0}}
-
-/* ── Sweat drops (SVG animated) ── */
-.clippy-dropsweat{position:absolute;top:0;right:0;font-size:18px;opacity:0;transition:opacity .3s}
-.clippy-corner.confused .clippy-dropsweat{opacity:1;animation:sweat-drop 0.8s ease-in-out infinite}
-.clippy-corner.sad .clippy-dropsweat{opacity:1}
-.clippy-corner.shake .clippy-dropsweat{opacity:1;animation:sweat-drop 0.4s ease-in-out infinite}
-@keyframes sweat-drop{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(4px) rotate(10deg)}}
-
-/* ── Draggable cursor ── */
-.clippy-corner{cursor:grab}
-.clippy-corner:active{cursor:grabbing}
-.clippy-corner.dragging{transition:none !important;opacity:0.8}
-
-/* ── Hover tooltip ── */
-.clippy-corner:hover .clippy-float-tip{opacity:1;transform:translateY(-10px)}
-.clippy-float-tip{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:var(--elevated);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;font-size:11px;color:var(--text);white-space:nowrap;opacity:0;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
-.clippy-float-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent)}
-
-/* ── Double-click dramatic pose ── */
-.clippy-corner.dramatic{animation:clippy-dramatic 0.8s ease-in-out 1}
-@keyframes clippy-dramatic{0%{transform:scale(1) rotate(0deg)}15%{transform:scale(1.3) rotate(-10deg) translateY(-20px)}30%{transform:scale(1.4) rotate(5deg) translateY(-30px)}50%{transform:scale(1.5) rotate(0deg) translateY(-40px)}70%{transform:scale(1.3) rotate(-5deg) translateY(-20px)}100%{transform:scale(1) rotate(0deg) translateY(0)}}
-
-/* ── Stretch on first load ── */
-.clippy-corner.stretch{animation:clippy-stretch 1.5s ease-in-out 1}
-@keyframes clippy-stretch{0%{transform:scale(0.3) translateY(40px) rotate(10deg);opacity:0}30%{transform:scale(0.8) translateY(-10px) rotate(-3deg);opacity:0.8}50%{transform:scale(1.15) translateY(-5px) rotate(1deg);opacity:1}70%{transform:scale(0.95) translateY(2px) rotate(0deg)}100%{transform:scale(1) translateY(0) rotate(0deg)}}
-
-/* ── Dramatic SVG pose overlay ── */
-.clippy-corner.dramatic .clippy-svg{filter:drop-shadow(0 0 30px var(--accent-glow)) brightness(1.3)}
 </style>
 </head>
 <body>
