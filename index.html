@@ -142,6 +142,51 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   .clippy-corner:hover{transform:scale(0.7);filter:drop-shadow(0 0 20px var(--accent-glow))}
   .clippy-bubble{bottom:170px;right:10px;max-width:230px;font-size:12px}
 }
+
+/* ═══ CLIPPY UPGRADE: Particles, drag, confetti, hover ═══ */
+
+/* ── Floating sparkles around Clippy ── */
+.clippy-sparkles{position:absolute;top:-8px;left:50%;transform:translateX(-50%);pointer-events:none;font-size:20px;opacity:0;transition:opacity .3s}
+.clippy-corner.idle .clippy-sparkles{opacity:0.15;animation:sparkle-drift 4s ease-in-out infinite}
+.clippy-corner.excited .clippy-sparkles{opacity:1;animation:sparkle-burst 0.8s ease-out forwards}
+.clippy-corner.celebrate .clippy-sparkles{opacity:1;animation:sparkle-rain 0.5s linear infinite}
+@keyframes sparkle-drift{0%,100%{opacity:0;transform:translateX(-50%) translateY(0)}20%{opacity:0.2;transform:translateX(-40%) translateY(-15px)}40%{opacity:0.15;transform:translateX(-60%) translateY(-30px)}60%{opacity:0.1;transform:translateX(-35%) translateY(-45px)}80%{opacity:0.05;transform:translateX(-55%) translateY(-55px)}}
+@keyframes sparkle-burst{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.5)}30%{opacity:1;transform:translateX(-50%) translateY(-30px) scale(1.2)}100%{opacity:0;transform:translateX(-50%) translateY(-50px) scale(0.8)}}
+@keyframes sparkle-rain{0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(0.5)}20%{opacity:1;transform:translateX(-30%) translateY(-25px) scale(1)}40%{opacity:1;transform:translateX(-70%) translateY(-40px) scale(0.8)}60%{opacity:0.5;transform:translateX(-20%) translateY(-55px) scale(0.6)}100%{opacity:0;transform:translateX(-50%) translateY(-70px) scale(0.3)}}
+
+/* ── Confetti particles (burst on celebrate) ── */
+.clippy-confetti{position:absolute;top:-10px;left:50%;pointer-events:none;z-index:999;opacity:0}
+.clippy-corner.celebrate .clippy-confetti{opacity:1}
+.confetti-piece{position:absolute;width:6px;height:6px;border-radius:2px;animation:confetti-fall 1s ease-out forwards}
+@keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(80px) rotate(720deg) scale(0.3);opacity:0}}
+
+/* ── Sweat drops (SVG animated) ── */
+.clippy-dropsweat{position:absolute;top:0;right:0;font-size:18px;opacity:0;transition:opacity .3s}
+.clippy-corner.confused .clippy-dropsweat{opacity:1;animation:sweat-drop 0.8s ease-in-out infinite}
+.clippy-corner.sad .clippy-dropsweat{opacity:1}
+.clippy-corner.shake .clippy-dropsweat{opacity:1;animation:sweat-drop 0.4s ease-in-out infinite}
+@keyframes sweat-drop{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(4px) rotate(10deg)}}
+
+/* ── Draggable cursor ── */
+.clippy-corner{cursor:grab}
+.clippy-corner:active{cursor:grabbing}
+.clippy-corner.dragging{transition:none !important;opacity:0.8}
+
+/* ── Hover tooltip ── */
+.clippy-corner:hover .clippy-float-tip{opacity:1;transform:translateY(-10px)}
+.clippy-float-tip{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);background:var(--elevated);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;font-size:11px;color:var(--text);white-space:nowrap;opacity:0;transition:all .3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none}
+.clippy-float-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent)}
+
+/* ── Double-click dramatic pose ── */
+.clippy-corner.dramatic{animation:clippy-dramatic 0.8s ease-in-out 1}
+@keyframes clippy-dramatic{0%{transform:scale(1) rotate(0deg)}15%{transform:scale(1.3) rotate(-10deg) translateY(-20px)}30%{transform:scale(1.4) rotate(5deg) translateY(-30px)}50%{transform:scale(1.5) rotate(0deg) translateY(-40px)}70%{transform:scale(1.3) rotate(-5deg) translateY(-20px)}100%{transform:scale(1) rotate(0deg) translateY(0)}}
+
+/* ── Stretch on first load ── */
+.clippy-corner.stretch{animation:clippy-stretch 1.5s ease-in-out 1}
+@keyframes clippy-stretch{0%{transform:scale(0.3) translateY(40px) rotate(10deg);opacity:0}30%{transform:scale(0.8) translateY(-10px) rotate(-3deg);opacity:0.8}50%{transform:scale(1.15) translateY(-5px) rotate(1deg);opacity:1}70%{transform:scale(0.95) translateY(2px) rotate(0deg)}100%{transform:scale(1) translateY(0) rotate(0deg)}}
+
+/* ── Dramatic SVG pose overlay ── */
+.clippy-corner.dramatic .clippy-svg{filter:drop-shadow(0 0 30px var(--accent-glow)) brightness(1.3)}
 </style>
 </head>
 <body>
@@ -207,10 +252,13 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 
 <!-- ── Animated Clippy ──────────────────────────────── -->
 <div class="clippy-bubble hidden" id="clippy-bubble"></div>
-<div class="clippy-corner idle" id="clippy-corner" onclick="clippyRandom()" title="Click me!">
+<div class="clippy-confetti" id="clippy-confetti"></div>
+<div class="clippy-corner hidden" id="clippy-corner" onclick="clippyRandom()" title="Double-click for drama!">
   <div class="clippy-glow"></div>
+  <div class="clippy-float-tip">Click me!</div>
   <span class="clippy-sparkles">✨</span>
   <span class="clippy-dropsweat">💦</span>
+  <span class="clippy-confetti-container"></span>
   <svg class="clippy-svg" viewBox="0 0 80 80" fill="none">
     <!-- Torso -->
     <g class="clippy-torso">
@@ -654,9 +702,11 @@ async function send() {
     const result = await queryAI(text);
     removeLoading();
     addMessage("ai", result.answer, result.sources);
+    clippyReactToAnswer(result.answer, text);
   } catch(e) {
     removeLoading();
     addMessage("ai", "⚠️ Error: " + e.message);
+    clippySad();
   }
   btn.disabled = false;
   input.focus();
@@ -737,7 +787,11 @@ let clippyTimer = null;
 let clippyBubbleTimer = null;
 
 function initClippy() {
-  setTimeout(() => clippySay("Hi! Upload a scan or ask me about your infrastructure."), 1500);
+  initClippyDrag();
+  initClippyDoubleClick();
+  // First wake-up
+  setTimeout(clippyWakeUp, 500);
+  // Wake-up handled by clippyWakeUp()
   // Auto-quote rotation every 25-45 seconds
   scheduleNextAutoQuote();
 }
@@ -797,7 +851,28 @@ function clippyCelebrate() {
   const el = document.getElementById("clippy-corner");
   el.classList.remove("idle", "thinking", "excited", "confused", "sad", "shake");
   el.classList.add("celebrate");
+  spawnConfetti();
   setTimeout(() => { el.classList.remove("celebrate"); el.classList.add("idle"); }, 2500);
+}
+
+// Burst of colorful confetti particles
+function spawnConfetti() {
+  const container = document.getElementById("clippy-confetti");
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = ['#ff4444','#22cc66','#0066ff','#ff7722','#e6b800','#7c3aed','#ff66aa'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random() * 60 - 30) + 'px';
+    p.style.top = (Math.random() * 10) + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDelay = (Math.random() * 0.5) + 's';
+    p.style.animationDuration = (0.6 + Math.random() * 0.8) + 's';
+    p.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    container.appendChild(p);
+  }
+  setTimeout(() => { if (container) container.innerHTML = ''; }, 2000);
 }
 
 function clippyShake() {
@@ -830,6 +905,127 @@ function clippyRandom() {
 
 loadKnowledge();
 initClippy();
+
+// ═══ CLIPPY UPGRADE: Context-aware reactions, drag, double-click ═══
+
+// React to answer content
+function clippyReactToAnswer(answer, question) {
+  const a = (answer || '').toLowerCase();
+  const q = (question || '').toLowerCase();
+
+  // Error / couldn't find
+  if (a.includes('couldn') || a.includes('error') || a.includes('no match') || a.includes('not found')) {
+    setTimeout(clippyConfused, 400);
+    return;
+  }
+
+  // Remediation queued
+  if (a.includes('queued') || a.includes('remediation')) {
+    setTimeout(() => { clippyCelebrate(); clippySay("Remediation queued! Check the pipeline."); }, 500);
+    return;
+  }
+
+  // Critical findings / bad news
+  if (a.includes('critical') || a.includes('kev') || a.includes('exploit') || a.includes('unhealthy')) {
+    setTimeout(() => { clippyShake(); clippySay("Yikes. Those are bad."); }, 500);
+    return;
+  }
+
+  // Good news / compliant / healthy
+  if (a.includes('compliant') || a.includes('healthy') || a.includes('pass') || a.includes('✅') || a.includes('good')) {
+    setTimeout(() => { clippyCelebrate(); clippySay("Nailed it!"); }, 500);
+    return;
+  }
+
+  // Pipeline / cross-tool status
+  if (a.includes('pipeline') || a.includes('pending') || a.includes('verified')) {
+    setTimeout(clippyTap, 500);
+    return;
+  }
+
+  // Default: happy tap
+  setTimeout(clippyTap, 400);
+}
+
+// Drag support
+let clippyDrag = { active: false, startX: 0, startY: 0, origX: 0, origY: 0 };
+
+function initClippyDrag() {
+  const el = document.getElementById('clippy-corner');
+  // Load saved position
+  try {
+    const pos = JSON.parse(localStorage.getItem('askclippy:clippy-position') || '{}');
+    if (pos.right !== undefined) el.style.right = pos.right + 'px';
+    if (pos.bottom !== undefined) el.style.bottom = pos.bottom + 'px';
+  } catch(e) {}
+
+  el.addEventListener('mousedown', function(e) {
+    clippyDrag.active = true;
+    clippyDrag.startX = e.clientX;
+    clippyDrag.startY = e.clientY;
+    clippyDrag.origRight = parseInt(el.style.right) || parseInt(getComputedStyle(el).right) || 40;
+    clippyDrag.origBottom = parseInt(el.style.bottom) || parseInt(getComputedStyle(el).bottom) || 120;
+    el.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!clippyDrag.active) return;
+    const dx = clippyDrag.startX - e.clientX;
+    const dy = clippyDrag.startY - e.clientY;
+    el.style.right = (clippyDrag.origRight - dx) + 'px';
+    el.style.bottom = (clippyDrag.origBottom + dy) + 'px';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!clippyDrag.active) return;
+    clippyDrag.active = false;
+    const el = document.getElementById('clippy-corner');
+    el.classList.remove('dragging');
+    // Save position
+    try {
+      localStorage.setItem('askclippy:clippy-position', JSON.stringify({
+        right: parseInt(el.style.right) || 40,
+        bottom: parseInt(el.style.bottom) || 120
+      }));
+    } catch(e) {}
+  });
+}
+
+// Double-click: dramatic pose
+let clippyLastClick = 0;
+function initClippyDoubleClick() {
+  const el = document.getElementById('clippy-corner');
+  el.addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - clippyLastClick < 400) {
+      // Double click!
+      clippyLastClick = 0;
+      el.classList.remove('idle', 'thinking', 'excited', 'confused', 'sad', 'celebrate', 'shake');
+      el.classList.add('dramatic');
+      clippySay("I am the Senate. ...of vulnerability management.");
+      setTimeout(() => { el.classList.remove('dramatic'); el.classList.add('idle'); }, 1500);
+      // Clear the single-click handler's timeout
+      if (clippySingleClickTimer) clearTimeout(clippySingleClickTimer);
+    } else {
+      clippyLastClick = now;
+      // Single click will fire clippyRandom via onclick attribute
+    }
+  });
+}
+
+// First-load stretch
+function clippyWakeUp() {
+  const el = document.getElementById('clippy-corner');
+  el.classList.remove('hidden');
+  el.classList.add('stretch');
+  setTimeout(() => {
+    el.classList.remove('stretch');
+    el.classList.add('idle');
+    clippySay("Morning! Ready to scan.");
+  }, 1800);
+}
+
 </script>
 </body>
 </html>

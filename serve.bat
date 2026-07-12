@@ -1,6 +1,3 @@
 @echo off
-echo Starting AskClippy local server...
-echo Open: http://localhost:8080
-echo.
+cd /d C:\Users\David\Desktop\askclippy
 python -m http.server 8080
-pause
