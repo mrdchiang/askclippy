@@ -119,6 +119,28 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   .clippy-bubble{bottom:170px;right:10px;max-width:230px;font-size:12px}
 }
 
+/* ── Sparkles that actually drift ── */
+.clippy-sparkles{position:absolute;top:-8px;left:35%;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none}
+.clippy-corner.idle .clippy-sparkles{opacity:0.2;animation:sparkle-dance 4s ease-in-out infinite}
+.clippy-corner.excited .clippy-sparkles{opacity:1;animation:sparkle-burst 0.7s ease-out forwards}
+.clippy-corner.celebrate .clippy-sparkles{opacity:1;animation:sparkle-rain 0.4s linear infinite}
+@keyframes sparkle-dance{0%,100%{transform:translate(0,0);opacity:0}15%{transform:translate(-8px,-12px);opacity:0.25}30%{transform:translate(6px,-25px);opacity:0.15}50%{transform:translate(-4px,-35px);opacity:0.08}70%{transform:translate(10px,-20px);opacity:0.03}}
+@keyframes sparkle-burst{0%{transform:translate(0,0) scale(0.5);opacity:0}25%{transform:translate(-10px,-20px) scale(1.3);opacity:1}50%{transform:translate(8px,-35px) scale(0.8);opacity:0.7}100%{transform:translate(0,-50px) scale(0.3);opacity:0}}
+@keyframes sparkle-rain{0%{transform:translate(0,0) scale(0.4);opacity:0}10%{transform:translate(-12px,-15px) scale(1.1);opacity:1}30%{transform:translate(10px,-35px) scale(0.7);opacity:0.8}60%{transform:translate(-8px,-55px) scale(0.4);opacity:0.3}100%{transform:translate(4px,-70px) scale(0.1);opacity:0}}
+
+/* ── Sweat drops that animate ── */
+.clippy-dropsweat{position:absolute;top:2px;right:2px;font-size:16px;opacity:0;transition:opacity .3s;pointer-events:none}
+.clippy-corner.confused .clippy-dropsweat{opacity:1;animation:sweat-fall 0.8s ease-in-out infinite}
+.clippy-corner.sad .clippy-dropsweat{opacity:1;animation:sweat-fall 1.2s ease-in-out infinite}
+.clippy-corner.shake .clippy-dropsweat{opacity:1;animation:sweat-fall 0.35s ease-in-out infinite}
+@keyframes sweat-fall{0%,100%{transform:translate(0,0) rotate(0deg)}30%{transform:translate(3px,6px) rotate(8deg)}60%{transform:translate(-2px,12px) rotate(-4deg)}80%{transform:translate(1px,3px) rotate(2deg)}}
+
+/* ── Confetti ── */
+.clippy-confetti{position:absolute;top:-10px;left:50%;pointer-events:none;z-index:999;opacity:0}
+.clippy-corner.celebrate .clippy-confetti{opacity:1}
+.confetti-piece{position:absolute;width:6px;height:6px;border-radius:2px;animation:confetti-fall 1s ease-out forwards}
+@keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(80px) rotate(720deg) scale(0.3);opacity:0}}
+
 </style>
 </head>
 <body>
