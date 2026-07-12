@@ -487,9 +487,32 @@ function localSearch(question) {
   if (!answer && knowledge.length > 100) {
     const allAssets = captureSection(lines, "All Assets", null);
     if (allAssets) {
-      answer = "**All Assets (" + allAssets.length + "):**\\n" + allAssets.slice(0, 10).join("\\n");
-      if (allAssets.length > 10) answer += "\\n...and " + (allAssets.length - 10) + " more";
+      answer = "**All Assets (" + allAssets.length + "):**\n" + allAssets.slice(0, 10).join("\n");
+      if (allAssets.length > 10) answer += "\n...and " + (allAssets.length - 10) + " more";
     }
+  }
+
+  // Cross-tool bridge: check for pending remediations from ShieldView/RemFlow
+  if (!answer && (q.includes("pending") || q.includes("remediation") || q.includes("queue") || q.includes("remflow") || q.includes("deploy"))) {
+    try {
+      const queue = JSON.parse(localStorage.getItem('security-tools:remediation-queue') || '[]');
+      const pending = queue.filter(i => i.status === 'pending' || i.status === 'deployed');
+      const validated = JSON.parse(localStorage.getItem('security-tools:validated-remediations') || '[]');
+      if (pending.length > 0 || validated.length > 0) {
+        answer = "**Cross-Tool Pipeline Status**\n";
+        if (pending.length > 0) {
+          answer += "\n🔄 **Pending/Deployed Remediations:** " + pending.length + "\n";
+          pending.slice(0, 5).forEach(i => {
+            answer += "- " + (i.cve || i.id || "?") + " → " + i.status + "\n";
+          });
+          if (pending.length > 5) answer += "- ...and " + (pending.length - 5) + " more\n";
+        }
+        if (validated.length > 0) {
+          answer += "\n✅ **Verified by TheValidator:** " + validated.length + "\n";
+        }
+        sources = ["security-tools:remediation-queue", "security-tools:validated-remediations"];
+      }
+    } catch(e) {}
   }
 
   if (!answer) {
