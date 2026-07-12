@@ -966,15 +966,23 @@ function initClippyDrag() {
     clippyDrag.origRight = parseInt(el.style.right) || parseInt(getComputedStyle(el).right) || 40;
     clippyDrag.origBottom = parseInt(el.style.bottom) || parseInt(getComputedStyle(el).bottom) || 120;
     el.classList.add('dragging');
+    // Hide bubble during drag so it doesn't lag behind
+    document.getElementById('clippy-bubble').classList.add('hidden');
     e.preventDefault();
   });
 
   document.addEventListener('mousemove', function(e) {
     if (!clippyDrag.active) return;
-    const dx = clippyDrag.startX - e.clientX;
+    const dx = e.clientX - clippyDrag.startX;
     const dy = clippyDrag.startY - e.clientY;
     el.style.right = (clippyDrag.origRight - dx) + 'px';
     el.style.bottom = (clippyDrag.origBottom + dy) + 'px';
+    // Move speech bubble to follow Clippy
+    const bubble = document.getElementById('clippy-bubble');
+    if (bubble) {
+      bubble.style.right = el.style.right;
+      bubble.style.bottom = (parseInt(el.style.bottom) + 110) + 'px';
+    }
   });
 
   document.addEventListener('mouseup', function() {
@@ -988,6 +996,12 @@ function initClippyDrag() {
         right: parseInt(el.style.right) || 40,
         bottom: parseInt(el.style.bottom) || 120
       }));
+      // Also sync bubble position on save
+      const bubble = document.getElementById('clippy-bubble');
+      if (bubble) {
+        bubble.style.right = el.style.right;
+        bubble.style.bottom = (parseInt(el.style.bottom) + 110) + 'px';
+      }
     } catch(e) {}
   });
 }
