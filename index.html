@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:11434 file:;">
 <title>AskClippy — Ask Your Infrastructure</title>
 <style>
 :root {
@@ -553,7 +553,7 @@ function localSearch(question) {
 function queueRemediation(cveId) {
   try {
     // Check if we have knowledge data about this CVE
-    const assetMatch = knowledge.match(/- (\\S+) .*" + cveId.replace(/[-]/g, '[- ]'));
+    const assetMatch = knowledge.match(/- ([^ ]+).*/);
     const hostname = assetMatch ? assetMatch[1] : "ASSET-" + Math.floor(Math.random() * 100);
     
     const queue = JSON.parse(localStorage.getItem('security-tools:remediation-queue') || '[]');
