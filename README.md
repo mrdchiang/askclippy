@@ -1,119 +1,91 @@
-# AskClippy — VM-to-AI Knowledge Pipeline
+# AskClippy — Local Setup Guide
 
-> "It looks like you're trying to find a vulnerability..."
+## What It Is
+AskClippy is an offline-capable AI assistant for your infrastructure. It loads Tenable scan data (CSV/JSON), lets you ask questions in plain English, queue remediations, and comes with an animated Clippy mascot with 11 moods.
 
-Animated AI assistant that ingests vulnerability management tool outputs and lets you ask questions in natural language. **100% offline capable — no internet required.**
+## Quick Start
 
-## Features
+### 1. Open the page
+Two ways:
 
-- **📂 Upload scan data** — Drop a Tenable CSV or JSON file directly in the browser
-- **🧠 Local LLM** — Connect to Ollama for fully private AI answers (no data leaves your machine)
-- **🔍 Local search** — Keyword matching on structured knowledge works without any AI
-- **📎 Animated Clippy** — 11 mood animations, 50+ meme/pop culture quotes, auto-quotes every 10-20s
-- **🔒 100% air-gap capable** — Works on classified/intranet networks with zero internet access
+| Method | URL | AI features? |
+|--------|-----|-------------|
+| **GitHub Pages** | https://mrdchiang.github.io/askclippy/ | ❌ Keyword search only |
+| **Local server** | http://localhost:8081/ | ✅ Full AI + remediation actions |
 
-## Audiences
+### 2. Start the local server
+Double-click `C:\Users\David\Desktop\askclippy\serve.bat`
 
-| Audience | Example Questions |
-|----------|------------------|
-| **IT Support** | "What version of Java is on WORKSTATION-42?" "Is the agent running on DC-PROD-01?" |
-| **Security Analysts** | "What CVEs are active on our domain controllers?" "Which assets have KEV-tagged vulnerabilities?" |
-| **Executives** | "What's our overall compliance score?" "How many endpoints have failed health checks?" |
-
-## Offline / Intranet Deployment
-
-**AskClippy requires zero internet access.** Everything runs locally:
-
-| Feature | Network | How |
-|---------|---------|-----|
-| Local search | ❌ None needed | Pure JS in browser, no network calls |
-| File upload (CSV/JSON) | ❌ None needed | All browser-side parsing |
-| Animated Clippy | ❌ None needed | Pure CSS/SVG animations |
-| Ollama LLM | ❌ None needed | Calls `http://localhost:11434` (loopback) |
-| Knowledge building | ❌ None needed | Python script runs on your machine |
-| Hosted URL (GitHub Pages) | ✅ Internet | Only if using `mrdchiang.github.io/askclippy/` |
-
-### Intranet Serve (No Internet)
-```bash
-# Option A — Python HTTP server (easiest)
-cd C:\Users\David\Desktop\askclippy
-python -m http.server 8080
-# Access at http://<your-ip>:8080/ from any machine on your LAN
-
-# Option B — IIS / Nginx
-# Point web root to C:\Users\David\Desktop\askclippy\
-# Serve index.html as default document
-
-# Option C — File share / USB
-# Just open index.html directly from a file share or USB drive
-# Works offline with file:// protocol
+Or from terminal:
+```
+C:\Users\David\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\python.exe -m http.server 8081
 ```
 
-### Local LLM (Ollama) — Fully Offline
-```bash
-# Install once (need internet for this step)
-winget install ollama
-ollama pull llama3.2
-
-# Then disconnect from the internet permanently.
-# Ollama runs entirely on your machine.
-
-# Edit index.html — uncomment these lines:
-#   const USE_OLLAMA = true;
-#   const OLLAMA_MODEL = "llama3.2";
-
-# Refresh the page — it now uses your local LLM,
-# calling http://localhost:11434 (loopback, no network)
+### 3. Make sure Ollama is running
+Open a terminal and run:
+```
+ollama serve
 ```
 
-## How It Works
+This starts the local AI engine on port 11434. Keep it running in the background.
 
-### Data Flow
+### 4. Open in browser
+Go to **http://localhost:8081/index.html**
+
+## What You Can Ask
+Click the example buttons, or type your own:
+- "Executive summary of our security posture"
+- "Which assets have critical KEV vulnerabilities?"
+- "Remediate CVE-2026-12345" — queues a fix in RemFlow
+- "What's pending in the remediation queue?"
+- "Show me the health status of all domain controllers"
+- "What is our GPO compliance rate?"
+
+## How It All Connects
+
 ```
-Tenable Export (CSV/JSON) or seed-data.json
-        │
-        ▼
-  askclippy.py (Knowledge Builder)
-        │
-        ▼
-  knowledge-snapshot.md (structured for AI)
-        │
-        ▼
-  index.html (browser interface)
-        │
-        ├── Upload: drag & drop any CSV/JSON scan file
-        ├── Ollama: local LLM (set USE_OLLAMA=true)
-        └── Search: keyword matching (no AI needed)
-```
-
-### Quick Start
-```bash
-# 1. Build knowledge from your connector data
-cd C:\Users\David\Desktop\askclippy
-python askclippy.py --input ../security-tools-connectors/seed-data.json --output .
-
-# 2. Open in browser
-start index.html
-
-# 3. Or drop a Tenable CSV/JSON directly in the browser
+AskClippy (port 8081) → Ollama (port 11434) → phi3:mini model
+                  ↘ localStorage bridge → ShieldView → RemFlow → TheValidator
 ```
 
-### Scheduled Refresh (Daily Cron)
-```yaml
-# Automatically rebuild knowledge every morning
-schedule: "0 6 * * *"
-command: cd /c/Users/David/Desktop/askclippy && python askclippy.py --input ../security-tools-connectors/seed-data.json --output .
+AskClippy talks to Ollama locally (no internet needed). It also reads/writes to the same `security-tools:` localStorage keys used by ShieldView, RemFlow, and TheValidator — so telling it to "remediate CVE-2026-12345" actually queues it in the pipeline.
+
+## Cross-Tool Pipeline
+Open the Launchpad at **https://mrdchiang.github.io/launchpad/** (or local) to see the pipeline:
+1. **ShieldView** finds vulnerabilities
+2. **RemFlow** deploys fixes
+3. **TheValidator** verifies endpoints
+4. **AskClippy** answers questions and queues actions
+
+## If Something Doesn't Work
+
+### "Ollama error: Failed to fetch"
+- Make sure `ollama serve` is running in a terminal window
+- Restart it: kill the process, then run `ollama serve` again
+- The `OLLAMA_ORIGINS=*` env var should already be set system-wide (was set with `setx`)
+
+### No models installed
 ```
+ollama pull phi3:mini
+```
+This downloads ~2.2GB. Only needs to be done once.
 
-## Files
+### Port 8081 already in use
+Change to another port:
+```
+python -m http.server 8082
+```
+Then visit http://localhost:8082/index.html
 
-| File | Purpose |
-|------|---------|
-| **index.html** | Web chat interface with animated Clippy + file upload + offline LLM support |
-| **askclippy.py** | Knowledge Builder — reads seed-data.json, outputs structured snapshot |
-| **knowledge-snapshot.md** | Latest knowledge snapshot (loaded by index.html) |
-| **knowledge-snapshot.json** | Same data in programmatic JSON |
-| **README.md** | This file |
+### Page shows directory listing instead of the app
+The server started in the wrong folder. Kill all Python processes on that port and restart from the `C:\Users\David\Desktop\askclippy` directory.
 
-## Live URL (requires internet)
-https://mrdchiang.github.io/askclippy/
+## File Locations
+| Item | Path |
+|------|------|
+| Main app | `C:\Users\David\Desktop\askclippy\index.html` |
+| Start script | `C:\Users\David\Desktop\askclippy\serve.bat` |
+| Knowledge data | `C:\Users\David\Desktop\askclippy\knowledge-snapshot.md` |
+| Ollama models | `~\.ollama\models\` |
+| Ollama config | `~\.ollama\` |
+| Git repo | `https://github.com/mrdchiang/askclippy` |
