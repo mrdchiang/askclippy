@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
 <title>AskClippy — Ask Your Infrastructure</title>
 <style>
 :root {
@@ -244,13 +245,13 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 const KNOWLEDGE_PATH = "knowledge-snapshot.md";
 
 // Local LLM (Ollama) — uncomment and set model name to use
-// const USE_OLLAMA = true;
-// const OLLAMA_URL = "http://localhost:11434/api/generate";
-// const OLLAMA_MODEL = "llama3.2"; // or "mistral", "codellama", "phi3:mini"
-
-const USE_OLLAMA = false;
+const USE_OLLAMA = true;
 const OLLAMA_URL = "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = "llama3.2";
+const OLLAMA_MODEL = "phi3:mini"; // or "mistral", "codellama", "llama3.2"
+
+// const USE_OLLAMA = false;
+// const OLLAMA_URL = "http://localhost:11434/api/generate";
+// const OLLAMA_MODEL = "llama3.2";
 
 let knowledge = "";
 let uploadedData = null; // raw parsed upload data
@@ -516,15 +517,60 @@ function localSearch(question) {
   }
 
   if (!answer) {
+    // Check for remediation action requests
+    if (q.includes("remediate") || q.includes("fix ") || q.includes("queue remediation") || q.includes("deploy fix")) {
+      const cveMatch = q.match(/cve[\s-]*(\d{4}[\s-]*\d+)/i);
+      if (cveMatch) {
+        const cveId = "CVE-" + cveMatch[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
+        const count = queueRemediation(cveId);
+        if (count > 0) {
+          answer = "✅ **Queued " + cveId + " for remediation** via RemFlow.\nCheck the Launchpad pipeline to track progress.";
+          sources = ["security-tools:remediation-queue"];
+        } else {
+          answer = "⚠️ Could not queue " + cveId + ". Check if it exists in your data.";
+        }
+      } else {
+        answer = "Tell me which CVE to remediate. Try: \"Remediate CVE-2026-12345\"";
+      }
+    }
+  }
+
+  if (!answer) {
     answer = "I couldn't find a match. Try:\\n"
       + "- \"Which assets have critical KEV vulnerabilities?\"\\n"
       + "- \"Show me health status of domain controllers\"\\n"
       + "- \"What is our GPO compliance rate?\"\\n"
       + "- \"Executive summary of our security posture\"\\n"
       + "- \"Tell me about CVE-2026-10011\"\\n"
-      + "- \"List all critical CVEs\"";
+      + "- \"List all critical CVEs\"\\n"
+      + "- \"Remediate CVE-2026-12345\"\\n"
+      + "- \"What's pending in the remediation queue?\"";
   }
   return { answer, sources };
+}
+
+// Cross-tool: queue a CVE for remediation via the localStorage bridge
+function queueRemediation(cveId) {
+  try {
+    // Check if we have knowledge data about this CVE
+    const assetMatch = knowledge.match(/- (\\S+) .*" + cveId.replace(/[-]/g, '[- ]'));
+    const hostname = assetMatch ? assetMatch[1] : "ASSET-" + Math.floor(Math.random() * 100);
+    
+    const queue = JSON.parse(localStorage.getItem('security-tools:remediation-queue') || '[]');
+    // Don't duplicate
+    if (queue.some(i => i.cve === cveId && i.status === 'pending')) return 0;
+    
+    queue.push({
+      cve: cveId,
+      hostname: hostname,
+      status: 'pending',
+      severity: 'high',
+      queuedAt: new Date().toISOString(),
+      queuedBy: 'AskClippy'
+    });
+    localStorage.setItem('security-tools:remediation-queue', JSON.stringify(queue));
+    return 1;
+  } catch(e) { return 0; }
 }
 
 function captureSection(lines, startLabel, endLabel) {
