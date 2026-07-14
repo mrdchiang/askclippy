@@ -100,7 +100,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 @keyframes clippy-bubble-pop{0%{opacity:0;transform:translateY(16px) scale(0.7)}100%{opacity:1;transform:translateY(0) scale(1)}}
 
 /* ── Bigger on desktop ── */
-@media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:110px;height:110px}.clippy-bubble{font-size:15px;max-width:360px}}
+@media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:140px;height:168px}.clippy-bubble{font-size:15px;max-width:360px}}
 
 /* ── Mobile ── */
 .clippy-corner{cursor:grab}.clippy-corner:active{cursor:grabbing}.clippy-corner.dragging{transition:none!important;opacity:0.8}
@@ -214,70 +214,110 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   <span class="clippy-sparkles">✨</span>
   <span class="clippy-dropsweat">💦</span>
   <span class="clippy-confetti-container"></span>
-  <svg class="clippy-svg" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg class="clippy-svg" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <!-- Shadow under Clippy -->
-    <ellipse cx="40" cy="78" rx="22" ry="4" fill="rgba(0,0,0,0.25)" class="clippy-shadow"/>
+    <ellipse cx="50" cy="112" rx="28" ry="5" fill="rgba(0,0,0,0.2)" class="clippy-shadow"/>
 
-    <!-- ≡ Legs (wire loops) -->
-    <g class="clippy-legs">
-      <path d="M30 52 Q24 60 22 68 Q21 73 26 73" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M50 52 Q56 60 58 68 Q59 73 54 73" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- ≡ Body (the signature rounded paperclip wire) -->
+    <!-- The classic single continuous paperclip wire -->
     <g class="clippy-torso">
-      <!-- Left side wire -->
-      <path d="M22 10 Q18 10 18 14 L18 42 Q18 50 24 52" stroke="url(#clip-grad)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <!-- Right side wire -->
-      <path d="M58 10 Q62 10 62 14 L62 42 Q62 50 56 52" stroke="url(#clip-grad)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <!-- Top curve (the paperclip head loop) -->
-      <path d="M22 10 Q40 2 58 10" stroke="url(#clip-grad)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <!-- Inner wire (gives it that classic paperclip double-wire look) -->
-      <path d="M28 14 Q28 8 40 8 Q52 8 52 14" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/>
+      <!-- Outer wire — one continuous path forming a paperclip silhouette -->
+      <!-- Start bottom-left, up the left side, loop at top, down the right side, curl at bottom-right -->
+      <path d="
+        M 30 78
+        Q 22 78 22 70
+        L 22 24
+        Q 22 10 30 8
+        L 48 4
+        Q 56 2 56 8
+        L 56 28
+        Q 56 32 52 32
+        L 38 32
+        Q 32 32 32 38
+        L 32 60
+        Q 32 70 38 72
+        L 62 72
+        Q 68 70 68 64
+        L 68 42
+        Q 68 36 72 36
+        L 80 36
+        Q 84 36 84 42
+        L 84 70
+        Q 84 80 76 82
+        L 62 84
+        Q 56 84 56 80
+        L 56 72"
+        stroke="url(#clip-grad)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Inner wire line (parallel track for the paperclip look) -->
+      <path d="
+        M 36 78
+        Q 28 78 28 70
+        L 28 26
+        Q 28 16 34 13
+        L 50 9
+        Q 54 8 54 12
+        L 54 28
+        Q 54 28 50 28
+        L 38 28
+        Q 28 28 28 38
+        L 28 60
+        Q 28 66 34 68
+        L 62 68
+        Q 64 68 64 64
+        L 64 42
+        Q 64 32 72 32
+        L 80 32
+        Q 80 32 80 42
+        L 80 70
+        Q 80 76 74 78
+        L 62 80"
+        stroke="url(#clip-grad)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
     </g>
 
-    <!-- ≡ Highlights on the wire (for that shiny metallic look) -->
-    <path d="M20 14 Q20 18 20 30" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <path d="M60 14 Q60 18 60 30" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <path d="M28 10 Q40 8 52 10" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- Metallic highlights on the wire -->
+    <path d="M 24 20 L 24 60" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>
+    <path d="M 64 38 L 64 66" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" fill="none"/>
+    <path d="M 34 10 L 48 6" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" fill="none"/>
 
-    <!-- ≡ Googly eyes (big white circles with black pupils) -->
+    <!-- Big googly eyes (the classic Clippy look) -->
     <g class="clippy-eyes-g">
-      <!-- Left eye white -->
-      <circle cx="32" cy="28" r="7" fill="white" stroke="var(--border)" stroke-width="1"/>
-      <!-- Left pupil -->
-      <circle cx="32" cy="28" r="3.5" fill="#1a1a2e"/>
-      <!-- Left eye shine -->
-      <circle cx="30" cy="26" r="1.5" fill="rgba(255,255,255,0.8)"/>
+      <!-- Left eye -->
+      <circle cx="38" cy="38" r="8" fill="white" stroke="#1a1a2e" stroke-width="1.5"/>
+      <circle cx="38" cy="38" r="4" fill="#1a1a2e"/>
+      <circle cx="36.5" cy="35.5" r="1.8" fill="rgba(255,255,255,0.9)"/>
 
-      <!-- Right eye white -->
-      <circle cx="48" cy="28" r="7" fill="white" stroke="var(--border)" stroke-width="1"/>
-      <!-- Right pupil -->
-      <circle cx="48" cy="28" r="3.5" fill="#1a1a2e"/>
-      <!-- Right eye shine -->
-      <circle cx="46" cy="26" r="1.5" fill="rgba(255,255,255,0.8)"/>
+      <!-- Right eye -->
+      <circle cx="58" cy="38" r="8" fill="white" stroke="#1a1a2e" stroke-width="1.5"/>
+      <circle cx="58" cy="38" r="4" fill="#1a1a2e"/>
+      <circle cx="56.5" cy="35.5" r="1.8" fill="rgba(255,255,255,0.9)"/>
     </g>
 
-    <!-- ≡ Eyebrows -->
-    <path class="clippy-brows" d="M25 18 Q32 15 39 18" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
-    <path class="clippy-brows" d="M41 18 Q48 15 55 18" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <!-- Eyebrows -->
+    <path class="clippy-brows" d="M30 26 Q38 22 46 26" stroke="var(--text)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path class="clippy-brows" d="M50 26 Q58 22 66 26" stroke="var(--text)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
 
-    <!-- ≡ Mouth (wire smile) -->
-    <path class="clippy-mouth" d="M34 40 Q40 46 46 40" stroke="var(--accent)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Mouth — big friendly smile -->
+    <path class="clippy-mouth" d="M40 52 Q48 60 56 52" stroke="var(--accent)" stroke-width="3" fill="none" stroke-linecap="round"/>
 
-    <!-- ≡ Arms (small wire hooks) -->
+    <!-- Small wire arms -->
     <g class="clippy-arms">
-      <path d="M18 30 Q8 28 8 36 Q8 42 16 40" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M62 30 Q72 28 72 36 Q72 42 64 40" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M 22 50 Q 8 46 6 56 Q 4 64 14 62" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M 74 50 Q 88 46 90 56 Q 92 64 82 62" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- Small wire feet -->
+    <g class="clippy-legs">
+      <path d="M 30 82 Q 22 94 20 104 Q 19 108 24 108" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M 62 82 Q 70 94 72 104 Q 73 108 68 108" stroke="url(#clip-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
     </g>
 
     <!-- Gradient definition -->
     <defs>
       <linearGradient id="clip-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#4da6ff"/>
-        <stop offset="30%" stop-color="#0088ff"/>
+        <stop offset="0%" stop-color="#66bbff"/>
+        <stop offset="25%" stop-color="#3399ff"/>
         <stop offset="60%" stop-color="#0066cc"/>
-        <stop offset="100%" stop-color="#004080"/>
+        <stop offset="100%" stop-color="#003d99"/>
       </linearGradient>
     </defs>
   </svg>
