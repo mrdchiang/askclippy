@@ -174,6 +174,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
         Drop a Tenable CSV or JSON file above to load your data.
         Ask about assets, CVEs, compliance, or remediation status.
       </p>
+      <p style="margin-top:8px;font-size:11px"><a href="debug.html" target="_blank" style="color:var(--accent);text-decoration:none;opacity:0.7">🔍 Debug Console</a></p>
     </div>
   </div>
   <div class="chat-area">
@@ -273,6 +274,14 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 </div>
 
 <script>
+// ════ Error Catcher ──────────────────────────────────────────
+(function(){'use strict';const SK='security-tools:error-log',MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';function gl(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}function sl(l){try{while(l.length>MX)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;const l=gl();l.push(e);sl(l)}
+window.onerror=function(m,s,l,c,err){ae({type:'runtime-error',message:String(m),source:s||'',line:l||0,col:c||0,stack:err&&err.stack?String(err.stack).slice(0,2000):''});return false};
+window.addEventListener('unhandledrejection',function(e){const r=e.reason;ae({type:'unhandled-rejection',message:String(r),stack:r&&r.stack?String(r.stack).slice(0,2000):''})});
+var oce=console.error;console.error=function(){try{var a=Array.prototype.slice.call(arguments);ae({type:'console-error',message:a.map(function(x){try{return typeof x==='object'?JSON.stringify(x,null,2).slice(0,500):String(x)}catch(e){return String(x)}}).join(' ').slice(0,2000),args:a.length})}catch(e){}return oce.apply(console,arguments)};
+window.__debugLog=function(m,d){ae({type:'manual',message:String(m),data:d?JSON.stringify(d).slice(0,1000):''})};
+console.log('['+TN+'] Error catcher active ✓');})();
+
 // ═══════════════════════════════════════════════════════════
 //  ASKCLIPPY — Talk to your VM data
 // ═══════════════════════════════════════════════════════════
