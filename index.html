@@ -274,14 +274,23 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 </div>
 
 <script>
-// ════ Contract Version Check ─────────────────────────────────(function(){  var CV = 'security-tools:contract-version';  var VER = '1.0.0';  try {    var stored = localStorage.getItem(CV);    if (!stored) { localStorage.setItem(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = function(){ b.remove(); localStorage.setItem(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
+// ════ Contract Version Check ─────────────────────────────────(function(){  var CV = KEYS.CONTRACT_VERSION_KEY;  var VER = '1.0.0';  try {    var stored = localStorage.getItem(CV);    if (!stored) { localStorage.setItem(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = function(){ b.remove(); localStorage.setItem(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
 // ════ Error Catcher ──────────────────────────────────────────
-(function(){'use strict';const SK='security-tools:error-log',MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';function gl(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}function sl(l){try{while(l.length>MX)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;const l=gl();l.push(e);sl(l)}
+(function(){'use strict';const SK=KEYS.ERROR_LOG,MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';function gl(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}function sl(l){try{while(l.length>MX)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;const l=gl();l.push(e);sl(l)}
 window.onerror=function(m,s,l,c,err){ae({type:'runtime-error',message:String(m),source:s||'',line:l||0,col:c||0,stack:err&&err.stack?String(err.stack).slice(0,2000):''});return false};
 window.addEventListener('unhandledrejection',function(e){const r=e.reason;ae({type:'unhandled-rejection',message:String(r),stack:r&&r.stack?String(r.stack).slice(0,2000):''})});
 var oce=console.error;console.error=function(){try{var a=Array.prototype.slice.call(arguments);ae({type:'console-error',message:a.map(function(x){try{return typeof x==='object'?JSON.stringify(x,null,2).slice(0,500):String(x)}catch(e){return String(x)}}).join(' ').slice(0,2000),args:a.length})}catch(e){}return oce.apply(console,arguments)};
 window.__debugLog=function(m,d){ae({type:'manual',message:String(m),data:d?JSON.stringify(d).slice(0,1000):''})};
 console.log('['+TN+'] Error catcher active ✓');})();
+
+// ===== LOCAL STORAGE KEYS =====
+const KEYS = {
+  CONTRACT_VERSION_KEY:    'security-tools:contract-version',
+  ERROR_LOG:               'security-tools:error-log',
+  REMEDIATION_QUEUE:       'security-tools:remediation-queue',
+  VALIDATED_REMEDIATIONS:  'security-tools:validated-remediations',
+  CLIPPY_POSITION:         'askclippy:clippy-position',
+};
 
 // ═══════════════════════════════════════════════════════════
 //  ASKCLIPPY — Talk to your VM data
@@ -542,9 +551,9 @@ function localSearch(question) {
   // Cross-tool bridge: check for pending remediations from ShieldView/RemFlow
   if (!answer && (q.includes("pending") || q.includes("remediation") || q.includes("queue") || q.includes("remflow") || q.includes("deploy"))) {
     try {
-      const queue = JSON.parse(localStorage.getItem('security-tools:remediation-queue') || '[]');
+      const queue = JSON.parse(localStorage.getItem(KEYS.REMEDIATION_QUEUE) || '[]');
       const pending = queue.filter(i => i.status === 'pending' || i.status === 'deployed');
-      const validated = JSON.parse(localStorage.getItem('security-tools:validated-remediations') || '[]');
+      const validated = JSON.parse(localStorage.getItem(KEYS.VALIDATED_REMEDIATIONS) || '[]');
       if (pending.length > 0 || validated.length > 0) {
         answer = "**Cross-Tool Pipeline Status**\n";
         if (pending.length > 0) {
@@ -557,7 +566,7 @@ function localSearch(question) {
         if (validated.length > 0) {
           answer += "\n✅ **Verified by TheValidator:** " + validated.length + "\n";
         }
-        sources = ["security-tools:remediation-queue", "security-tools:validated-remediations"];
+        sources = [KEYS.REMEDIATION_QUEUE, KEYS.VALIDATED_REMEDIATIONS];
       }
     } catch(e) {}
   }
@@ -571,7 +580,7 @@ function localSearch(question) {
         const count = queueRemediation(cveId);
         if (count > 0) {
           answer = "✅ **Queued " + cveId + " for remediation** via RemFlow.\nCheck the Launchpad pipeline to track progress.";
-          sources = ["security-tools:remediation-queue"];
+          sources = [KEYS.REMEDIATION_QUEUE];
         } else {
           answer = "⚠️ Could not queue " + cveId + ". Check if it exists in your data.";
         }
@@ -602,7 +611,7 @@ function queueRemediation(cveId) {
     const assetMatch = knowledge.match(/- ([^ ]+).*/);
     const hostname = assetMatch ? assetMatch[1] : "ASSET-" + Math.floor(Math.random() * 100);
     
-    const queue = JSON.parse(localStorage.getItem('security-tools:remediation-queue') || '[]');
+    const queue = JSON.parse(localStorage.getItem(KEYS.REMEDIATION_QUEUE) || '[]');
     // Don't duplicate
     if (queue.some(i => i.cve === cveId && i.status === 'pending')) return 0;
     
@@ -614,7 +623,7 @@ function queueRemediation(cveId) {
       queuedAt: new Date().toISOString(),
       queuedBy: 'AskClippy'
     });
-    localStorage.setItem('security-tools:remediation-queue', JSON.stringify(queue));
+    localStorage.setItem(KEYS.REMEDIATION_QUEUE, JSON.stringify(queue));
     return 1;
   } catch(e) { return 0; }
 }
@@ -952,7 +961,7 @@ function initClippyDrag() {
   const el = document.getElementById('clippy-corner');
   // Load saved position
   try {
-    const pos = JSON.parse(localStorage.getItem('askclippy:clippy-position') || '{}');
+    const pos = JSON.parse(localStorage.getItem(KEYS.CLIPPY_POSITION) || '{}');
     if (pos.right !== undefined) el.style.right = pos.right + 'px';
     if (pos.bottom !== undefined) el.style.bottom = pos.bottom + 'px';
   } catch(e) {}
@@ -990,7 +999,7 @@ function initClippyDrag() {
     el.classList.remove('dragging');
     // Save position
     try {
-      localStorage.setItem('askclippy:clippy-position', JSON.stringify({
+      localStorage.setItem(KEYS.CLIPPY_POSITION, JSON.stringify({
         right: parseInt(el.style.right) || 40,
         bottom: parseInt(el.style.bottom) || 120
       }));
