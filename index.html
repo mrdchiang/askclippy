@@ -142,6 +142,36 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .confetti-piece{position:absolute;width:6px;height:6px;border-radius:2px;animation:confetti-fall 1s ease-out forwards}
 @keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}100%{transform:translateY(80px) rotate(720deg) scale(0.3);opacity:0}}
 
+/* ── Data Source Selector ── */
+.src-selector{display:flex;align-items:center;gap:8px}
+.src-selector select{background:var(--elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:5px 10px;font-size:12px;font-family:inherit;cursor:pointer}
+.src-selector select:focus{outline:none;border-color:var(--accent)}
+.freshness{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+.freshness .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.freshness .dot.live{background:var(--good);animation:pulse-dot 2s ease-in-out infinite}
+.freshness .dot.stale{background:var(--medium)}
+.freshness .dot.offline{background:var(--text-muted)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── Prompt Chips ── */
+.prompt-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 24px 0;flex-shrink:0}
+.prompt-chips .chip{background:var(--elevated);border:1px solid var(--border);border-radius:20px;color:var(--text-sec);padding:5px 14px;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.prompt-chips .chip:hover{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+
+/* ── How I Found This ── */
+.how-i-found{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.how-i-found summary{background:var(--surface);padding:6px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;user-select:none}
+.how-i-found summary:hover{color:var(--text-sec)}
+.how-i-found .filter-json{background:var(--bg);padding:10px 14px;font-size:11px;font-family:var(--mono);color:var(--text-sec);white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.how-i-found .fallback-notice{background:#352215;padding:8px 14px;font-size:11px;color:var(--high)}
+
+/* ── Source Citations ── */
+.cite-link{display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px;margin:2px;font-size:11px;font-family:var(--mono);color:var(--accent);text-decoration:none;transition:all .15s}
+.cite-link:hover{background:var(--accent);color:#fff;text-decoration:none}
+.cite-link.cve-link::before{content:'🔗'}
+.cite-link.asset-link::before{content:'🖥'}
+.cite-link.remediation-link::before{content:'🔧'}
+
 </style>
 </head>
 <body>
@@ -179,9 +209,18 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   </div>
   <div class="chat-area">
     <div class="upload-bar" id="uploadBar">
-      <label for="fileInput">📂 Upload Scan Data</label>
+      <div class="src-selector">
+        <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">Data Source:</span>
+        <select id="dataSource" onchange="switchDataSource(this.value)">
+          <option value="snapshot">📸 Static Snapshot (knowledge-snapshot.md)</option>
+          <option value="upload">📂 Uploaded File</option>
+          <option value="live">🔄 Live Pipeline (cross-tool data)</option>
+        </select>
+        <span class="freshness" id="freshness" style="display:none"><span class="dot live"></span> <span id="freshnessLabel"></span></span>
+      </div>
+      <label for="fileInput" style="margin-left:auto">📂 Upload Scan Data</label>
       <input type="file" id="fileInput" accept=".csv,.json" style="display:none" onchange="handleFileUpload(event)">
-      <span class="file-info" id="fileInfo">Load a Tenable CSV or JSON file</span>
+      <span class="file-info" id="fileInfo">No file loaded</span>
       <span class="status" id="uploadStatus"></span>
     </div>
     <div class="messages" id="messages">
@@ -196,6 +235,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
           <button onclick="ask('Which CVEs are exploited in the wild?')">Exploited CVEs</button>
           <button onclick="ask('Executive summary of our security posture')">Executive summary</button>
           <button onclick="ask('List assets with poor health scores')">Unhealthy assets</button>
+        </div>
+        <div class="prompt-chips" style="margin-top:14px">
+          <span style="font-size:11px;color:var(--text-muted);margin-right:4px">🔀 Cross-tool:</span>
+          <span class="chip" onclick="ask('Which KEV CVEs have been deployed but not yet verified?')">KEV deployed but unverified</span>
+          <span class="chip" onclick="ask('What is our overall remediation rate across all teams?')">Overall remediation rate</span>
+          <span class="chip" onclick="ask('Show me assets with EOL OS that have critical CVEs')">EOL OS + critical CVEs</span>
         </div>
       </div>
     </div>
@@ -289,8 +334,22 @@ const KEYS = {
   ERROR_LOG:               'security-tools:error-log',
   REMEDIATION_QUEUE:       'security-tools:remediation-queue',
   VALIDATED_REMEDIATIONS:  'security-tools:validated-remediations',
+  VERIFIED_QUEUE:          'security-tools:verified-queue',
+  LAUNCHPAD_QUEUE:         'security-tools:launchpad-queue',
+  LAST_REMEDIATION:        'security-tools:last-remediation',
   CLIPPY_POSITION:         'askclippy:clippy-position',
+  // Cross-tool pipeline keys (shared across apps)
+  IMPORTED_FINDINGS:       'security-tools:imported-findings',
+  IMPORTED_ASSETS:         'security-tools:imported-assets',
+  KEV_CATALOG:             'security-tools:kev-catalog',
 };
+
+// Live pipeline data caching
+let liveFindings = [];
+let liveAssets = [];
+let liveRemediations = [];
+let liveVerifications = [];
+let liveLastUpdated = null;
 
 // ═══════════════════════════════════════════════════════════
 //  ASKCLIPPY — Talk to your VM data
@@ -317,12 +376,15 @@ async function loadKnowledge() {
     const resp = await fetch(KNOWLEDGE_PATH);
     if (!resp.ok) throw new Error("Not found");
     knowledge = await resp.text();
+    window._snapshotKnowledge = knowledge;  // cache for switching back
     extractStats(knowledge);
     updateModeDisplay();
+    updateFreshnessIndicator();
     clippySay("Loaded environment knowledge. Ask me anything!");
   } catch(e) {
     knowledge = "";
-    clippySay("No knowledge file found. Upload a scan to get started!");
+    window._snapshotKnowledge = "";
+    clippySay("No knowledge file found. Upload a scan or switch to Live Pipeline!");
   }
 }
 
@@ -354,6 +416,140 @@ function updateModeDisplay() {
     label.textContent = "Local Search";
     detail.textContent = "Keyword matching on knowledge snapshot";
     if (offline) offline.textContent = "✅ 100% offline capable";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DATA SOURCE — Snapshot / Upload / Live Pipeline
+// ═══════════════════════════════════════════════════════════
+
+let currentSource = "snapshot";
+
+function switchDataSource(source) {
+  currentSource = source;
+  const freshnessEl = document.getElementById("freshness");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const fileInfo = document.getElementById("fileInfo");
+
+  if (source === "live") {
+    loadLivePipeline();
+    freshnessEl.style.display = "";
+    updateFreshnessIndicator();
+    if (uploadStatus) uploadStatus.textContent = "🔄 Live";
+    if (uploadStatus) uploadStatus.className = "status loaded";
+    if (fileInfo) fileInfo.textContent = "Cross-tool pipeline data";
+    clippySay("Live pipeline connected. I can see findings, assets, and remediations.");
+  } else if (source === "upload") {
+    freshnessEl.style.display = "none";
+    if (!uploadedData) {
+      if (uploadStatus) uploadStatus.textContent = "";
+      if (uploadStatus) uploadStatus.className = "status";
+      if (fileInfo) fileInfo.textContent = "No file loaded";
+    }
+  } else {
+    // snapshot
+    freshnessEl.style.display = "";
+    updateFreshnessIndicator();
+    if (!uploadedData) {
+      if (uploadStatus) uploadStatus.textContent = "";
+      if (uploadStatus) uploadStatus.className = "status";
+      if (fileInfo) fileInfo.textContent = "Knowledge snapshot loaded";
+    }
+    knowledge = window._snapshotKnowledge || knowledge;
+    extractStats(knowledge);
+  }
+}
+
+function loadLivePipeline() {
+  try {
+    const findingsRaw = localStorage.getItem(KEYS.IMPORTED_FINDINGS);
+    const assetsRaw = localStorage.getItem(KEYS.IMPORTED_ASSETS);
+    const queueRaw = localStorage.getItem(KEYS.REMEDIATION_QUEUE);
+    const validatedRaw = localStorage.getItem(KEYS.VALIDATED_REMEDIATIONS);
+    const verifiedRaw = localStorage.getItem(KEYS.VERIFIED_QUEUE);
+    const kevRaw = localStorage.getItem(KEYS.KEV_CATALOG);
+
+    liveFindings = findingsRaw ? JSON.parse(findingsRaw) : [];
+    liveAssets = assetsRaw ? JSON.parse(assetsRaw) : [];
+    liveRemediations = queueRaw ? JSON.parse(queueRaw) : [];
+    liveVerifications = validatedRaw ? JSON.parse(validatedRaw) : [];
+
+    // Merge verified queue
+    if (verifiedRaw) {
+      try { liveVerifications = liveVerifications.concat(JSON.parse(verifiedRaw)); } catch(e) {}
+    }
+
+    // Build knowledge from live data
+    let md = "# AskClippy Knowledge — Live Pipeline\\n## Overview\\n";
+    md += "- " + liveFindings.length + " findings, " + liveAssets.length + " assets\\n";
+    md += "- " + liveRemediations.length + " pending remediations, " + liveVerifications.length + " verified\\n\\n";
+
+    md += "## Assets\\n";
+    for (const a of (liveAssets || []).slice(0, 200)) {
+      const name = a.hostname || a.name || a.ip || "?";
+      const os = a.os || "?";
+      const ip = a.ip || "?";
+      md += "- " + name + " (OS:" + os + ", IP:" + ip + ")\\n";
+    }
+
+    md += "\\n## Findings\\n";
+    for (const f of (liveFindings || []).slice(0, 300)) {
+      const cve = f.cve || "?";
+      const check = f.check || f.name || "?";
+      const sev = f.severity || "Medium";
+      const asset = f.asset || f.hostname || "?";
+      const kevTag = f.kev ? " [KEV]" : "";
+      const state = f.state || "Active";
+      md += "- " + cve + ": " + check + " | " + sev + " | " + asset + " | " + state + kevTag + "\\n";
+    }
+
+    md += "\\n## Remediation Queue\\n";
+    for (const r of (liveRemediations || []).slice(0, 100)) {
+      const cve = r.cve || "?";
+      const status = r.status || "pending";
+      const hostname = r.hostname || "?";
+      md += "- " + cve + " → " + status + " on " + hostname + "\\n";
+    }
+
+    md += "\\n## Verified Remediations\\n";
+    for (const v of (liveVerifications || []).slice(0, 100)) {
+      const cve = v.cve || "?";
+      md += "- " + cve + " verified\\n";
+    }
+
+    knowledge = md;
+    liveLastUpdated = new Date().toISOString();
+    extractStats(md);
+    updateFreshnessIndicator();
+  } catch(e) {
+    knowledge = "";
+    clippySay("Could not load live pipeline data: " + e.message);
+  }
+}
+
+function updateFreshnessIndicator() {
+  const el = document.getElementById("freshness");
+  const dot = el ? el.querySelector(".dot") : null;
+  const label = document.getElementById("freshnessLabel");
+  if (!el || !label) return;
+
+  if (currentSource === "live") {
+    el.style.display = "";
+    if (liveLastUpdated) {
+      const age = Math.floor((Date.now() - new Date(liveLastUpdated).getTime()) / 60000);
+      if (age < 5) { dot.className = "dot live"; label.textContent = "Live (now)"; }
+      else if (age < 60) { dot.className = "dot live"; label.textContent = "Live (" + age + "m ago)"; }
+      else { dot.className = "dot stale"; label.textContent = "Stale (" + Math.floor(age/60) + "h ago)"; }
+    } else {
+      dot.className = "dot offline";
+      label.textContent = "No data yet";
+    }
+  } else if (currentSource === "snapshot") {
+    el.style.display = "";
+    dot.className = "dot live";
+    label.textContent = "Snapshot loaded";
+  } else {
+    el.style.display = "none";
   }
 }
 
@@ -460,51 +656,303 @@ function csvToKnowledge(rows, headers, filename) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  QUERY ENGINE — Local LLM (Ollama) + Local Search
+//  QUERY ENGINE — Structured Retrieval + LLM fallback
 // ═══════════════════════════════════════════════════════════
 
+let lastFilterSpec = null;
+let lastRetrievalMode = null; // 'structured' | 'keyword_fallback'
+
 async function queryAI(question) {
+  // Step 1: Try structured retrieval (two-step approach)
+  if (currentSource === "live" && (liveFindings.length > 0 || liveRemediations.length > 0)) {
+    const structured = structuredRetrieval(question);
+    if (structured) {
+      lastFilterSpec = structured.filterSpec;
+      lastRetrievalMode = 'structured';
+      return structured;
+    }
+    // Fall through to keyword if structured doesn't match
+    lastRetrievalMode = 'keyword_fallback';
+  }
+
+  // Step 2: LLM-based retrieval (if Ollama available)
   if (USE_OLLAMA) {
     try {
-      const prompt = "You are AskClippy, an IT infrastructure assistant. Answer the question using ONLY the provided knowledge context. If the answer isn't in the context, say so.\\n\\nKNOWLEDGE:\\n" + knowledge.slice(0, 8000) + "\\n\\nQUESTION: " + question + "\\n\\nAnswer:";
-      const resp = await fetch(OLLAMA_URL, {
+      const result = await llmStructuredRetrieval(question);
+      if (result) return result;
+    } catch(e) {}
+  }
+
+  // Step 3: Fall back to keyword search
+  lastRetrievalMode = 'keyword_fallback';
+  return keywordSearch(question);
+}
+
+// ── Structured Retrieval: parse question → filter spec → execute locally ──
+function structuredRetrieval(question) {
+  const q = question.toLowerCase();
+  let filterSpec = null;
+
+  // Cross-tool queries
+  if (q.includes("kev") && (q.includes("deployed") || q.includes("not yet verified"))) {
+    filterSpec = { entity: "findings", kev: true, deployed: true, unverified: true, limit: 50 };
+  }
+  else if (q.includes("remediation rate") || q.includes("across all teams")) {
+    filterSpec = { entity: "remediations", aggregate: "rate", limit: 100 };
+  }
+  else if (q.includes("eol") && q.includes("critical cve")) {
+    filterSpec = { entity: "assets", eol: true, has_critical_cve: true, limit: 50 };
+  }
+  // General entity queries
+  else if (q.includes("cve") || q.includes("vulnerability") || q.includes("finding")) {
+    filterSpec = { entity: "findings", limit: 50 };
+    if (q.includes("critical")) filterSpec.severity = ["Critical"];
+    else if (q.includes("high")) filterSpec.severity = ["High"];
+    if (q.includes("kev") || q.includes("exploit")) filterSpec.kev = true;
+    if (q.includes("active")) filterSpec.state = ["Active"];
+    if (q.includes("fixed")) filterSpec.state = ["Fixed"];
+    // Extract CVE ID if present
+    const cveMatch = q.match(/cve[-\s]*(\d{4}[-\s]*\d{4,})/i);
+    if (cveMatch) filterSpec.cve = "CVE-" + cveMatch[1].replace(/[-\s]+/g, "-");
+  }
+  else if (q.includes("asset") || q.includes("host") || q.includes("server") || q.includes("endpoint")) {
+    filterSpec = { entity: "assets", limit: 50 };
+    if (q.includes("eol")) filterSpec.eol = true;
+    if (q.includes("unhealthy") || q.includes("poor health")) filterSpec.health = "critical";
+  }
+  else if (q.includes("remediation") || q.includes("deploy") || q.includes("queue") || q.includes("pending")) {
+    filterSpec = { entity: "remediations", limit: 50 };
+    if (q.includes("pending")) filterSpec.state = ["pending"];
+    if (q.includes("deployed")) filterSpec.state = ["deployed"];
+    if (q.includes("verified")) filterSpec.state = ["verified"];
+  }
+
+  if (!filterSpec) return null;
+
+  // Execute filter and build answer
+  try {
+    const result = executeFilter(filterSpec);
+    return {
+      answer: result.answer,
+      sources: result.sources,
+      filterSpec: filterSpec,
+      matchedCount: result.matchedCount
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+function executeFilter(spec) {
+  let matches = [];
+  let answer = "";
+  let sources = [];
+  let matchedCount = 0;
+
+  if (spec.entity === "findings") {
+    matches = liveFindings.filter(f => {
+      if (spec.kev && !f.kev) return false;
+      if (spec.severity && spec.severity.length > 0 && !spec.severity.includes(f.severity)) return false;
+      if (spec.state && spec.state.length > 0 && !spec.state.includes(f.state)) return false;
+      if (spec.cve && (!f.cve || f.cve !== spec.cve)) return false;
+      if (spec.deployed) {
+        const rem = liveRemediations.find(r => r.cve === f.cve);
+        if (!rem || rem.status !== 'deployed') return false;
+      }
+      if (spec.unverified) {
+        const rem = liveRemediations.find(r => r.cve === f.cve);
+        if (!rem || rem.status !== 'deployed' || rem.verifiedAt) return false;
+      }
+      return true;
+    }).slice(0, spec.limit || 50);
+
+    matchedCount = matches.length;
+    if (matches.length > 0) {
+      answer = "**Findings (" + matches.length + "):**\n";
+      matches.forEach(f => {
+        const kevTag = f.kev ? " 🛡️KEV" : "";
+        answer += "- " + (f.cve || "?") + ": " + (f.check || f.name || "?") + " | " + (f.severity || "?") + " | " + (f.asset || "?") + kevTag + "\n";
+      });
+      sources = matches.map(f => ({
+        type: "cve",
+        cve: f.cve,
+        label: f.cve,
+        url: "https://mrdchiang.github.io/amp-shield/#/findings?filter=" + encodeURIComponent(f.cve || "")
+      }));
+    } else {
+      answer = "No findings matched the filter.";
+    }
+  }
+  else if (spec.entity === "assets") {
+    matches = liveAssets.filter(a => {
+      if (spec.eol) {
+        // Simple EOL detection: check OS string for old versions
+        const os = (a.os || "").toLowerCase();
+        if (!os.includes("2012") && !os.includes("2016") && !os.includes("2008") && !os.includes("7") && !os.includes("14.04") && !os.includes("16.04")) return false;
+      }
+      if (spec.has_critical_cve) {
+        const hasCrit = liveFindings.some(f => f.asset === a.hostname && f.severity === "Critical" && f.state === "Active");
+        if (!hasCrit) return false;
+      }
+      if (spec.health && spec.health === "critical") {
+        // Assume health score < 50 is critical
+        const score = a.healthScore || a.score || 100;
+        if (score >= 50) return false;
+      }
+      return true;
+    }).slice(0, spec.limit || 50);
+
+    matchedCount = matches.length;
+    if (matches.length > 0) {
+      answer = "**Assets (" + matches.length + "):**\n";
+      matches.forEach(a => {
+        const eolTag = spec.eol ? " 🪦EOL" : "";
+        answer += "- " + (a.hostname || a.name || "?") + " (OS:" + (a.os || "?") + ", IP:" + (a.ip || "?") + ")" + eolTag + "\n";
+      });
+      sources = matches.map(a => ({
+        type: "asset",
+        hostname: a.hostname || a.name,
+        label: a.hostname || a.name || "?",
+        url: "https://mrdchiang.github.io/thevalidator/#/asset/" + encodeURIComponent(a.hostname || a.name || "")
+      }));
+    } else {
+      answer = "No assets matched the filter.";
+    }
+  }
+  else if (spec.entity === "remediations") {
+    if (spec.aggregate === "rate") {
+      const total = liveRemediations.length;
+      const completed = liveRemediations.filter(r => r.status === 'deployed' || r.status === 'verified' || r.status === 'completed').length;
+      const rate = total > 0 ? Math.round(completed / total * 100) : 0;
+      answer = "**Overall Remediation Rate:** " + rate + "%\n- " + completed + " completed out of " + total + " total remediations\n- " + liveRemediations.filter(r => r.status === 'pending').length + " still pending";
+      sources = [{ type: "remediation", label: "RemFlow Pipeline", url: "https://mrdchiang.github.io/remflow/#/pipeline" }];
+      matchedCount = total;
+    } else {
+      matches = liveRemediations.filter(r => {
+        if (spec.state && spec.state.length > 0) {
+          if (spec.state.includes("verified")) return r.verifiedAt || r.status === 'verified';
+          return spec.state.includes(r.status);
+        }
+        if (spec.cve && r.cve !== spec.cve) return false;
+        return true;
+      }).slice(0, spec.limit || 50);
+
+      matchedCount = matches.length;
+      if (matches.length > 0) {
+        answer = "**Remediations (" + matches.length + "):**\n";
+        matches.forEach(r => {
+          answer += "- " + (r.cve || "?") + " → " + (r.status || "?") + " on " + (r.hostname || "?") + "\n";
+        });
+        sources = matches.map(r => ({
+          type: "remediation",
+          cve: r.cve,
+          label: r.cve || "?",
+          url: "https://mrdchiang.github.io/remflow/#/remediations?cve=" + encodeURIComponent(r.cve || "")
+        }));
+      } else {
+        answer = "No remediations matched the filter.";
+      }
+    }
+  }
+
+  return { answer, sources, matchedCount };
+}
+
+// ── LLM Structured Retrieval: prompt model for JSON filter spec ──
+async function llmStructuredRetrieval(question) {
+  try {
+    const prompt = `You are a query parser. Output ONLY valid JSON (no markdown, no explanation) in this exact format:
+{"entity":"findings|assets|remediations","severity":["Critical","High","Medium","Low"],"kev":true|false,"team":["teamname"],"state":["Active","Fixed","pending","deployed"],"age_gt_days":30,"limit":50,"aggregate":"rate"|null,"eol":true|false,"has_critical_cve":true|false,"deployed":true|false,"unverified":true|false,"cve":"CVE-YYYY-NNNN"|null}
+
+Use ONLY these entities and fields. If you can't parse, output: {"error":"cannot parse"}
+
+Question: ${question}
+
+JSON:`;
+
+    const resp = await fetch(OLLAMA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        prompt: prompt,
+        stream: false,
+        options: { temperature: 0, num_predict: 256 }
+      }),
+    });
+
+    if (!resp.ok) throw new Error("Ollama " + resp.status);
+    const data = await resp.json();
+    let jsonStr = (data.response || "").trim();
+
+    // Strip markdown code fences if present
+    jsonStr = jsonStr.replace(/```json\s*/gi, "").replace(/```\s*$/g, "").trim();
+
+    let spec;
+    try {
+      spec = JSON.parse(jsonStr);
+    } catch(e) {
+      // Retry once with error appended
+      const retryPrompt = prompt + "\nERROR in your previous JSON: " + e.message + "\nFix it and output ONLY valid JSON:\n";
+      const retryResp = await fetch(OLLAMA_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: OLLAMA_MODEL,
-          prompt: prompt,
+          prompt: retryPrompt,
           stream: false,
-          options: { temperature: 0.1, num_predict: 512 }
+          options: { temperature: 0, num_predict: 256 }
         }),
       });
-      if (!resp.ok) throw new Error("Ollama " + resp.status);
-      const data = await resp.json();
-      const answer = (data.response || "").trim();
-      if (answer) return { answer: answer, sources: ["Ollama/" + OLLAMA_MODEL] };
-      throw new Error("Empty response");
-    } catch(e) {
-      return { answer: "⚠️ Ollama error: " + e.message + ". Falling back to local search.", sources: [] };
+      if (!retryResp.ok) throw new Error("Retry failed");
+      const retryData = await retryResp.json();
+      let retryStr = (retryData.response || "").trim().replace(/```json\s*/gi, "").replace(/```\s*$/g, "").trim();
+      try {
+        spec = JSON.parse(retryStr);
+      } catch(e2) {
+        // LLM failed — fall back to keyword search
+        lastRetrievalMode = 'keyword_fallback';
+        return null;
+      }
     }
+
+    if (spec.error || !spec.entity) {
+      lastRetrievalMode = 'keyword_fallback';
+      return null;
+    }
+
+    lastFilterSpec = spec;
+    lastRetrievalMode = 'structured';
+
+    // Execute the filter spec
+    const result = executeFilter(spec);
+    return {
+      answer: result.answer,
+      sources: result.sources,
+      filterSpec: spec,
+      matchedCount: result.matchedCount
+    };
+  } catch(e) {
+    return null;
   }
-  // ── Local keyword search (fallback) ───────────────────
-  return localSearch(question);
 }
 
-function localSearch(question) {
+// ── Keyword Search (fallback) ──
+function keywordSearch(question) {
   const q = question.toLowerCase();
-  if (!knowledge) return { answer: "No knowledge loaded. Upload a scan file first!", sources: [] };
+  if (!knowledge) return { answer: "No knowledge loaded. Upload a scan file or switch to Live Pipeline!", sources: [] };
   const lines = knowledge.split("\\n");
   let answer = "";
   let sources = [];
 
   if (q.includes("critical") && (q.includes("kev") || q.includes("exploit"))) {
     const cap = captureSection(lines, "Critical KEV CVEs", "All Active CVEs");
-    if (cap) { answer = "**Critical KEV CVEs:**\\n" + cap.join("\\n"); sources = cap.map(l => l.match(/CVE-[\\d-]+/)?.[0]).filter(Boolean); }
+    if (cap) { answer = "**Critical KEV CVEs:**\\n" + cap.join("\\n"); sources = cap.map(l => ({type:"cve",label:l.match(/CVE-[\\d-]+/)?.[0]||"?",url:""})).filter(s=>s.label!=="?"); }
   }
   else if (q.includes("health") || q.includes("unhealthy") || q.includes("dc ") || q.includes("domain controller")) {
     const cap = captureSection(lines, "Assets With Critical Findings", "All Assets");
     const dcs = (cap || []).filter(l => l.toLowerCase().includes("dc-"));
-    if (dcs.length > 0) { answer = "**Domain Controllers:**\\n" + dcs.join("\\n"); sources = dcs.map(l => l.match(/-\\s*(\\S+)/)?.[1]).filter(Boolean); }
+    if (dcs.length > 0) { answer = "**Domain Controllers:**\\n" + dcs.join("\\n"); sources = dcs.map(l => ({type:"asset",label:l.match(/-\\s*(\\S+)/)?.[1]||"?",url:""})); }
     else if (cap) { answer = "**Assets With Critical Findings:**\\n" + cap.join("\\n"); }
   }
   else if (q.includes("gpo") || q.includes("compliance")) {
@@ -520,7 +968,7 @@ function localSearch(question) {
     if (m) {
       const id = "CVE-" + m[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
       const hl = lines.filter(l => l.includes(id));
-      if (hl.length > 0) { answer = "**" + id + ":**\\n" + hl.join("\\n"); sources = [id]; }
+      if (hl.length > 0) { answer = "**" + id + ":**\\n" + hl.join("\\n"); sources = [{type:"cve",label:id,url:""}]; }
     }
     if (!answer) {
       const all = captureSection(lines, "All Active CVEs", "Assets With Critical Findings");
@@ -566,7 +1014,7 @@ function localSearch(question) {
         if (validated.length > 0) {
           answer += "\n✅ **Verified by TheValidator:** " + validated.length + "\n";
         }
-        sources = [KEYS.REMEDIATION_QUEUE, KEYS.VALIDATED_REMEDIATIONS];
+        sources = [{type:"remediation",label:"Pipeline",url:""},{type:"remediation",label:"Verified",url:""}];
       }
     } catch(e) {}
   }
@@ -574,13 +1022,13 @@ function localSearch(question) {
   if (!answer) {
     // Check for remediation action requests
     if (q.includes("remediate") || q.includes("fix ") || q.includes("queue remediation") || q.includes("deploy fix")) {
-      const cveMatch = q.match(/cve[\s-]*(\d{4}[\s-]*\d+)/i);
+      const cveMatch = q.match(/cve[\\s-]*(\\d{4}[\\s-]*\\d+)/i);
       if (cveMatch) {
-        const cveId = "CVE-" + cveMatch[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
+        const cveId = "CVE-" + cveMatch[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
         const count = queueRemediation(cveId);
         if (count > 0) {
           answer = "✅ **Queued " + cveId + " for remediation** via RemFlow.\nCheck the Launchpad pipeline to track progress.";
-          sources = [KEYS.REMEDIATION_QUEUE];
+          sources = [{type:"remediation",label:cveId,url:"https://mrdchiang.github.io/remflow/#/remediations?cve="+encodeURIComponent(cveId)}];
         } else {
           answer = "⚠️ Could not queue " + cveId + ". Check if it exists in your data.";
         }
@@ -642,7 +1090,7 @@ function captureSection(lines, startLabel, endLabel) {
 //  CHAT UI
 // ═══════════════════════════════════════════════════════════
 
-function addMessage(role, content, sources) {
+function addMessage(role, content, sources, filterSpec) {
   const el = document.createElement("div");
   el.className = "msg " + role;
   if (role === "user") {
@@ -657,18 +1105,42 @@ function addMessage(role, content, sources) {
       if (m === "'") return '&#39;';
       return m;
     });
-    el.innerHTML = '<div class="label">📎 AskClippy</div><div class="answer">' + safe + "</div>";
+    let html = '<div class="label">📎 AskClippy</div><div class="answer">' + safe + "</div>";
+
+    // Source citations with deep links
     if (sources && sources.length > 0) {
-      const safeSources = sources.map(s => '<span class="src">' + s.replace(/[&<>"']/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        if (m === '"') return '&quot;';
-        if (m === "'") return '&#39;';
-        return m;
-      }) + "</span>").join(" ");
-      el.innerHTML += '<div class="sources">Sources: ' + safeSources + "</div>";
+      let citesHtml = '<div class="sources">Sources: ';
+      sources.forEach(s => {
+        if (typeof s === 'string') {
+          citesHtml += '<span class="src">' + s.replace(/[&<>"']/g, function(m) {
+            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;'; if (m === "'") return '&#39;'; return m;
+          }) + "</span> ";
+        } else if (s && s.url) {
+          const cls = s.type === 'cve' ? 'cite-link cve-link' : s.type === 'asset' ? 'cite-link asset-link' : 'cite-link remediation-link';
+          const label = (s.label || '').replace(/[&<>"']/g, function(m) {
+            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;'; if (m === "'") return '&#39;'; return m;
+          });
+          citesHtml += '<a href="' + s.url + '" target="_blank" class="' + cls + '" title="Open in ' + (s.type || 'tool') + '">' + label + '</a>\n';
+        }
+      });
+      citesHtml += '</div>';
+      html += citesHtml;
     }
+
+    // How I found this — collapsible filter spec panel
+    if (filterSpec) {
+      const specJson = JSON.stringify(filterSpec, null, 2);
+      html += '<details class="how-i-found"><summary>🔍 How I found this</summary><div class="filter-json">' + specJson.replace(/[&<>"']/g, function(m) {
+        if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;'; if (m === "'") return '&#39;'; return m;
+      }) + '</div></details>';
+    } else if (lastRetrievalMode === 'keyword_fallback') {
+      html += '<details class="how-i-found"><summary>🔍 How I found this</summary><div class="fallback-notice">⚠️ Used keyword search (structured filter not available). Switch to Live Pipeline for structured retrieval.</div></details>';
+    }
+
+    el.innerHTML = html;
   }
   document.getElementById("messages").appendChild(el);
   el.scrollIntoView({ behavior: "smooth" });
@@ -708,7 +1180,7 @@ async function send() {
   try {
     const result = await queryAI(text);
     removeLoading();
-    addMessage("ai", result.answer, result.sources);
+    addMessage("ai", result.answer, result.sources, result.filterSpec || lastFilterSpec);
     clippyReactToAnswer(result.answer, text);
   } catch(e) {
     removeLoading();
