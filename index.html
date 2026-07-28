@@ -844,7 +844,7 @@ function executeFilter(spec) {
         type: "cve",
         cve: f.cve,
         label: f.cve,
-        url: "https://mrdchiang.github.io/amp-shield/#/findings?filter=" + encodeURIComponent(f.cve || "")
+        url: "https://mrdchiang.github.io/shieldview/#/findings?filter=" + encodeURIComponent(f.cve || "")
       }));
     } else {
       answer = "No findings matched the filter.";

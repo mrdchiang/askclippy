@@ -39,7 +39,7 @@ AI-powered chat assistant for your security infrastructure. Ask about assets, CV
 
 | Tool | URL | Role |
 |---|---|---|
-| 🛡️ ShieldView | [amp-shield](https://mrdchiang.github.io/amp-shield/) | Vulnerability management |
+| 🛡️ ShieldView | [shieldview](https://mrdchiang.github.io/shieldview/) | Vulnerability management |
 | 🛠️ RemFlow | [remflow](https://mrdchiang.github.io/remflow/) | Remediation pipeline |
 | ⚡ TheValidator | [thevalidator](https://mrdchiang.github.io/thevalidator/) | Endpoint health + compliance |
 | 🚀 Launchpad | [launchpad](https://mrdchiang.github.io/launchpad/) | Tool index + pipeline view |
