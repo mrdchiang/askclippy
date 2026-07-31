@@ -41,6 +41,7 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Route live-pipeline reads through the adapter.
 - [x] Route remediation queue handoffs through the adapter.
 - [x] Validate adapter-loaded records with the shared contract.
+- [x] Add conformance tests for AskClippy's local adapter fallback.
 - [ ] Add adapter conformance tests shared with the other suite repositories.
 - [ ] Decide how contract versions are distributed and synchronized.
 

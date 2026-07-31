@@ -339,9 +339,11 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
   </svg>
 </div>
 
+<script src="./js/storage-fallback.js"></script>
 <script src="./js/askclippy-core.js"></script>
 <script>
 const { captureSection, normalizeCveId, parseCSVRecords } = window.AskClippyCore;
+const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
 const storageAdapterPromise = (async function() {
   try {
@@ -355,36 +357,7 @@ const storageAdapterPromise = (async function() {
     return storage;
   } catch(e) {
     console.warn('[AskClippy] Storage adapter fetch failed, using localStorage fallback:', e.message);
-    const fallback = {
-      async read(key) {
-        try {
-          const raw = localStorage.getItem(key);
-          return raw === null ? null : JSON.parse(raw);
-        } catch (error) {
-          console.warn('[AskClippy] Fallback storage read failed:', key, error.message);
-          return null;
-        }
-      },
-      async write(key, value) {
-        try {
-          localStorage.setItem(key, JSON.stringify(value));
-          return true;
-        } catch (error) {
-          console.warn('[AskClippy] Fallback storage write failed:', key, error.message);
-          return false;
-        }
-      },
-      async readCollection(key) {
-        const value = await this.read(key);
-        if (Array.isArray(value)) return value;
-        if (value && Array.isArray(value.rows)) return value.rows;
-        if (value && Array.isArray(value.data)) return value.data;
-        return [];
-      },
-      async writeCollection(key, records) {
-        return Array.isArray(records) ? this.write(key, records) : false;
-      }
-    };
+    const fallback = createLocalStorageAdapter(localStorage, console);
     window.Storage = fallback;
     return fallback;
   }
