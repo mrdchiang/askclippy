@@ -50,9 +50,9 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Make prompt chips and Clippy keyboard accessible.
 - [x] Add visible focus indicators.
 - [x] Respect reduced-motion preferences.
-- [ ] Improve low-contrast secondary text and dense pipeline navigation.
+- [x] Improve low-contrast secondary text and dense pipeline navigation.
 - [x] Add a truthful Ollama availability indicator.
-- [ ] Prevent Clippy bubbles from obscuring active content.
+- [x] Prevent Clippy bubbles from obscuring active content.
 
 ### Phase 4 — Security hardening
 
@@ -68,7 +68,7 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Test shared-contract validators and live-pipeline record filtering.
 - [x] Add automated tests for CSV parsing, query matching, and contract filters.
 - [ ] Test snapshot, upload, live-pipeline, adapter-fallback, and Ollama modes.
-- [ ] Test mobile, tablet, and desktop breakpoints.
+- [x] Test mobile, tablet, and desktop breakpoints.
 - [ ] Verify ShieldView -> RemFlow -> TheValidator -> AskClippy handoffs.
 - [ ] Commit and push the verified build.
 
