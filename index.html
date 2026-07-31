@@ -348,7 +348,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
 <script src="./js/storage-fallback.js"></script>
 <script src="./js/askclippy-core.js"></script>
 <script>
-const { captureSection, classifyClippyReaction, filterSuiteRecords, normalizeCveId, ollamaModelAvailable, parseCSVRecords, parseStructuredQuery } = window.AskClippyCore;
+const { captureSection, classifyClippyReaction, extractKnowledgeStats, filterSuiteRecords, normalizeCveId, ollamaModelAvailable, parseCSVRecords, parseStructuredQuery, shouldUseOllama } = window.AskClippyCore;
 const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
 const storageAdapterPromise = (async function() {
@@ -474,6 +474,7 @@ const OLLAMA_TAGS_URL = "http://localhost:11434/api/tags";
 
 let knowledge = "";
 let uploadedData = null; // raw parsed upload data
+let uploadedKnowledge = "";
 let ollamaState = USE_OLLAMA ? "checking" : "disabled";
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_RECORDS = 50000;
@@ -507,16 +508,12 @@ async function loadKnowledge() {
 }
 
 function extractStats(md) {
-  const mAssets = md.match(/(\d+) assets/);
-  const mFindings = md.match(/· (\d+) active/);
-  const mCVEs = md.match(/(\d+) CVEs/);
-  const mHealth = md.match(/health: (\d+)%/);
-  const mGPO = md.match(/GPO compliance: (\d+)%/);
-  if (mAssets) document.getElementById("stat-assets").textContent = mAssets[1];
-  if (mFindings) document.getElementById("stat-findings").textContent = mFindings[1];
-  if (mCVEs) document.getElementById("stat-cves").textContent = mCVEs[1];
-  if (mHealth) document.getElementById("stat-health").textContent = mHealth[1] + "%";
-  if (mGPO) document.getElementById("stat-gpo").textContent = mGPO[1] + "%";
+  const stats = extractKnowledgeStats(md);
+  document.getElementById("stat-assets").textContent = stats.assets === null ? "—" : stats.assets;
+  document.getElementById("stat-findings").textContent = stats.findings === null ? "—" : stats.findings;
+  document.getElementById("stat-cves").textContent = stats.cves === null ? "—" : stats.cves;
+  document.getElementById("stat-health").textContent = stats.health === null ? "—" : stats.health + "%";
+  document.getElementById("stat-gpo").textContent = stats.gpo === null ? "—" : stats.gpo + "%";
 }
 
 function updateModeDisplay() {
@@ -598,6 +595,9 @@ async function switchDataSource(source) {
       if (uploadStatus) uploadStatus.textContent = "";
       if (uploadStatus) uploadStatus.className = "status";
       if (fileInfo) fileInfo.textContent = "No file loaded";
+    } else {
+      knowledge = uploadedKnowledge;
+      extractStats(knowledge);
     }
   } else {
     // snapshot
@@ -729,6 +729,10 @@ function handleFileUpload(event) {
     return;
   }
 
+  currentSource = "upload";
+  document.getElementById("dataSource").value = "upload";
+  document.getElementById("freshness").style.display = "none";
+
   const reader = new FileReader();
   status.textContent = "⏳ Processing...";
   status.className = "status processing";
@@ -757,6 +761,7 @@ function parseJSONUpload(text, filename) {
   uploadedData = data;
   // Convert to knowledge markdown
   const md = jsonToKnowledge(data, filename);
+  uploadedKnowledge = md;
   knowledge = md;
   extractStats(md);
   document.getElementById("uploadStatus").textContent = "✅ " + (data.assets ? data.assets.length : "?") + " assets loaded";
@@ -779,6 +784,7 @@ function parseCSVUpload(text, filename) {
   uploadedData = { rows, headers };
   // Build knowledge from CSV
   const md = csvToKnowledge(rows, headers, filename);
+  uploadedKnowledge = md;
   knowledge = md;
   extractStats(md);
   document.getElementById("uploadStatus").textContent = "✅ " + rows.length + " rows loaded" + (truncated ? " (limit reached)" : "");
@@ -846,7 +852,7 @@ async function queryAI(question) {
   }
 
   // Step 2: LLM-based retrieval (if Ollama available)
-  if (USE_OLLAMA && ollamaState === "available") {
+  if (shouldUseOllama(currentSource, USE_OLLAMA, ollamaState)) {
     try {
       const result = await llmStructuredRetrieval(question);
       if (result) return result;
@@ -1660,7 +1666,7 @@ function clippyReactToAnswer(answer, question) {
   }
 
   // Default: happy tap
-  setTimeout(clippyTap, 400);
+  setTimeout(() => { clippyTap(); clippySay("Answer ready."); }, 400);
 }
 
 // Drag support

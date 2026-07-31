@@ -152,6 +152,29 @@
     });
   }
 
+  function extractKnowledgeStats(markdown) {
+    const text = String(markdown || '');
+    const matchNumber = patterns => {
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match) return Number(match[1]);
+      }
+      return null;
+    };
+
+    return {
+      assets: matchNumber([/(\d+)\s+assets\b/i]),
+      findings: matchNumber([/(\d+)\s+active\b/i, /(\d+)\s+findings\b/i]),
+      cves: matchNumber([/(\d+)\s+CVEs\b/i]),
+      health: matchNumber([/Endpoint health:.*?(\d+)%\s+pass rate/i, /health:\s*(\d+)%/i]),
+      gpo: matchNumber([/GPO compliance:.*?(\d+)%\s+compliant/i, /GPO compliance:\s*(\d+)%/i]),
+    };
+  }
+
+  function shouldUseOllama(source, enabled, state) {
+    return source === 'live' && enabled === true && state === 'available';
+  }
+
   return Object.freeze({
     normalizeCveId,
     parseCSVRecords,
@@ -160,5 +183,7 @@
     parseStructuredQuery,
     classifyClippyReaction,
     ollamaModelAvailable,
+    extractKnowledgeStats,
+    shouldUseOllama,
   });
 });
