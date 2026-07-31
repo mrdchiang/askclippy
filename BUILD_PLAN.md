@@ -63,6 +63,7 @@ ShieldView -> RemFlow -> TheValidator
 
 ### Phase 5 — Verification and delivery
 
+- [x] Extract and test CSV parsing, CVE normalization, and snapshot section parsing.
 - [ ] Add automated tests for CSV parsing, query matching, and contract filters.
 - [ ] Test snapshot, upload, live-pipeline, adapter-fallback, and Ollama modes.
 - [ ] Test mobile, tablet, and desktop breakpoints.

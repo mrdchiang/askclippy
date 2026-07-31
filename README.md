@@ -52,3 +52,12 @@ See [BUILD_PLAN.md](BUILD_PLAN.md) for the suite-aware delivery plan and guardra
 ## Technology
 
 HTML5 · CSS3 · Vanilla JavaScript · Ollama API · localStorage · Same-origin shared contract
+
+## Development
+
+The project has no runtime build step or third-party dependencies. Run the
+automated logic tests with:
+
+```bash
+npm test
+```

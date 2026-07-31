@@ -1,0 +1,7 @@
+{
+  "name": "askclippy",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
