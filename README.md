@@ -20,9 +20,14 @@ AI-powered chat assistant for your security infrastructure. Ask about assets, CV
 
 - Single-file HTML (~1500 lines)
 - Vanilla JS, no build step, no dependencies
-- Shared `ollama-client.js` and `prompts.js` modules vendored from launchpad
-- Same-origin localStorage bus (`mrdchiang.github.io`)
+- AskClippy is the natural-language query layer across ShieldView, RemFlow, and TheValidator
+- Launchpad's async storage adapter is the persistence boundary
+- The shared contract owns suite keys, record shapes, and validation
+- Same-origin localStorage bus (`mrdchiang.github.io`) provides the current offline backend
+- The async adapter boundary allows a future IndexedDB or `security-tools-api` backend
 - CSP: `connect-src 'self' http://localhost:11434`
+
+See [BUILD_PLAN.md](BUILD_PLAN.md) for the suite-aware delivery plan and guardrails.
 
 ## Live Demo
 
