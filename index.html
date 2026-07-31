@@ -222,7 +222,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
     </div>
     <div class="section" style="margin-top:16px">
       <h3>AI Mode</h3>
-      <div id="ai-mode-display" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
+      <div id="ai-mode-display" role="status" aria-live="polite" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
         <div><span id="mode-icon">🔍</span> <span id="mode-label">Local Search</span></div>
         <div style="color:var(--text-muted);margin-top:4px;font-size:11px" id="mode-detail">No AI API configured</div>
         <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--good)">🌐 <span id="offline-badge">100% offline capable</span></div>
@@ -342,7 +342,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
 <script src="./js/storage-fallback.js"></script>
 <script src="./js/askclippy-core.js"></script>
 <script>
-const { captureSection, classifyClippyReaction, filterSuiteRecords, normalizeCveId, parseCSVRecords, parseStructuredQuery } = window.AskClippyCore;
+const { captureSection, classifyClippyReaction, filterSuiteRecords, normalizeCveId, ollamaModelAvailable, parseCSVRecords, parseStructuredQuery } = window.AskClippyCore;
 const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
 const storageAdapterPromise = (async function() {
@@ -460,6 +460,7 @@ const USE_OLLAMA = true;
 const OLLAMA_URL = "http://localhost:11434/api/generate";
 const OLLAMA_MODEL = "phi3:mini"; // or "mistral", "codellama", "llama3.2"
 const OLLAMA_TIMEOUT_MS = 3000;
+const OLLAMA_TAGS_URL = "http://localhost:11434/api/tags";
 
 // const USE_OLLAMA = false;
 // const OLLAMA_URL = "http://localhost:11434/api/generate";
@@ -467,6 +468,7 @@ const OLLAMA_TIMEOUT_MS = 3000;
 
 let knowledge = "";
 let uploadedData = null; // raw parsed upload data
+let ollamaState = USE_OLLAMA ? "checking" : "disabled";
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_RECORDS = 50000;
 
@@ -516,17 +518,52 @@ function updateModeDisplay() {
   const label = document.getElementById("mode-label");
   const detail = document.getElementById("mode-detail");
   const offline = document.getElementById("offline-badge");
-  if (USE_OLLAMA) {
+  if (ollamaState === "available") {
     icon.textContent = "🧠";
     label.textContent = "Local LLM (" + OLLAMA_MODEL + ")";
-    detail.textContent = "via Ollama — fully offline";
+    detail.textContent = "Ollama connected · model available";
+    if (offline) offline.textContent = "✅ No internet required";
+  } else if (ollamaState === "checking") {
+    icon.textContent = "⏳";
+    label.textContent = "Checking local AI…";
+    detail.textContent = "Looking for Ollama and " + OLLAMA_MODEL;
+    if (offline) offline.textContent = "✅ Local retrieval remains available";
+  } else if (ollamaState === "missing-model") {
+    icon.textContent = "🔍";
+    label.textContent = "Local Search";
+    detail.textContent = "Ollama connected · " + OLLAMA_MODEL + " is not installed";
+    if (offline) offline.textContent = "✅ Using offline local retrieval";
+  } else if (ollamaState === "unavailable") {
+    icon.textContent = "🔍";
+    label.textContent = "Local Search";
+    detail.textContent = "Ollama unavailable · using local retrieval";
     if (offline) offline.textContent = "✅ No internet required";
   } else {
     icon.textContent = "🔍";
     label.textContent = "Local Search";
-    detail.textContent = "Keyword matching on knowledge snapshot";
+    detail.textContent = "Ollama disabled · using local retrieval";
     if (offline) offline.textContent = "✅ 100% offline capable";
   }
+}
+
+async function checkOllamaAvailability() {
+  if (!USE_OLLAMA) {
+    ollamaState = "disabled";
+    updateModeDisplay();
+    return;
+  }
+
+  ollamaState = "checking";
+  updateModeDisplay();
+  try {
+    const response = await fetchWithTimeout(OLLAMA_TAGS_URL, { method: "GET" }, OLLAMA_TIMEOUT_MS);
+    if (!response.ok) throw new Error("Ollama " + response.status);
+    const data = await response.json();
+    ollamaState = ollamaModelAvailable(data.models, OLLAMA_MODEL) ? "available" : "missing-model";
+  } catch (error) {
+    ollamaState = "unavailable";
+  }
+  updateModeDisplay();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -803,7 +840,7 @@ async function queryAI(question) {
   }
 
   // Step 2: LLM-based retrieval (if Ollama available)
-  if (USE_OLLAMA) {
+  if (USE_OLLAMA && ollamaState === "available") {
     try {
       const result = await llmStructuredRetrieval(question);
       if (result) return result;
@@ -1025,6 +1062,8 @@ JSON:`;
       matchedCount: result.matchedCount
     };
   } catch(e) {
+    ollamaState = "unavailable";
+    updateModeDisplay();
     return null;
   }
 }
@@ -1549,6 +1588,7 @@ function clippyRandom() {
 // ═══════════════════════════════════════════════════════════
 
 loadKnowledge();
+checkOllamaAvailability();
 initClippy();
 
 // ═══ CLIPPY UPGRADE: Context-aware reactions, drag, double-click ═══

@@ -51,7 +51,7 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Add visible focus indicators.
 - [x] Respect reduced-motion preferences.
 - [ ] Improve low-contrast secondary text and dense pipeline navigation.
-- [ ] Add a truthful Ollama availability indicator.
+- [x] Add a truthful Ollama availability indicator.
 - [ ] Prevent Clippy bubbles from obscuring active content.
 
 ### Phase 4 — Security hardening

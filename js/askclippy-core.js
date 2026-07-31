@@ -139,6 +139,19 @@
     return 'default';
   }
 
+  function ollamaModelAvailable(models, configuredModel) {
+    if (!Array.isArray(models) || !configuredModel) return false;
+    const target = String(configuredModel).trim().toLowerCase();
+    const aliases = new Set([target]);
+    if (target.endsWith(':latest')) aliases.add(target.slice(0, -7));
+    else if (!target.includes(':')) aliases.add(target + ':latest');
+
+    return models.some(entry => {
+      const names = typeof entry === 'string' ? [entry] : [entry && entry.name, entry && entry.model];
+      return names.some(name => name && aliases.has(String(name).trim().toLowerCase()));
+    });
+  }
+
   return Object.freeze({
     normalizeCveId,
     parseCSVRecords,
@@ -146,5 +159,6 @@
     filterSuiteRecords,
     parseStructuredQuery,
     classifyClippyReaction,
+    ollamaModelAvailable,
   });
 });
