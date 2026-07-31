@@ -69,7 +69,7 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Add automated tests for CSV parsing, query matching, and contract filters.
 - [x] Test snapshot, upload, live-pipeline, adapter-fallback, and Ollama modes.
 - [x] Test mobile, tablet, and desktop breakpoints.
-- [ ] Verify ShieldView -> RemFlow -> TheValidator -> AskClippy handoffs.
+- [x] Verify ShieldView -> RemFlow -> TheValidator -> AskClippy handoffs.
 - [x] Commit and push the verified build.
 
 ## Guardrails
