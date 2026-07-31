@@ -342,7 +342,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
 <script src="./js/storage-fallback.js"></script>
 <script src="./js/askclippy-core.js"></script>
 <script>
-const { captureSection, filterSuiteRecords, normalizeCveId, parseCSVRecords, parseStructuredQuery } = window.AskClippyCore;
+const { captureSection, classifyClippyReaction, filterSuiteRecords, normalizeCveId, parseCSVRecords, parseStructuredQuery } = window.AskClippyCore;
 const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
 const storageAdapterPromise = (async function() {
@@ -1555,36 +1555,35 @@ initClippy();
 
 // React to answer content
 function clippyReactToAnswer(answer, question) {
-  const a = (answer || '').toLowerCase();
-  const q = (question || '').toLowerCase();
+  const reaction = classifyClippyReaction(answer, question);
 
   // Error / couldn't find
-  if (a.includes('couldn') || a.includes('error') || a.includes('no match') || a.includes('not found')) {
+  if (reaction === 'error') {
     setTimeout(clippyConfused, 400);
     return;
   }
 
   // Remediation queued
-  if (a.includes('queued') || a.includes('remediation')) {
+  if (reaction === 'queued') {
     setTimeout(() => { clippyCelebrate(); clippySay("Remediation queued! Check the pipeline."); }, 500);
     return;
   }
 
   // Critical findings / bad news
-  if (a.includes('critical') || a.includes('kev') || a.includes('exploit') || a.includes('unhealthy')) {
+  if (reaction === 'critical') {
     setTimeout(() => { clippyShake(); clippySay("Yikes. Those are bad."); }, 500);
     return;
   }
 
   // Good news / compliant / healthy
-  if (a.includes('compliant') || a.includes('healthy') || a.includes('pass') || a.includes('✅') || a.includes('good')) {
+  if (reaction === 'good') {
     setTimeout(() => { clippyCelebrate(); clippySay("Nailed it!"); }, 500);
     return;
   }
 
   // Pipeline / cross-tool status
-  if (a.includes('pipeline') || a.includes('pending') || a.includes('verified')) {
-    setTimeout(clippyTap, 500);
+  if (reaction === 'pipeline') {
+    setTimeout(() => { clippyTap(); clippySay("Pipeline summary ready."); }, 500);
     return;
   }
 

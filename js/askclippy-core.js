@@ -115,11 +115,36 @@
     return filterSpec;
   }
 
+  function classifyClippyReaction(answer, question) {
+    const a = String(answer || '').toLowerCase();
+    const q = String(question || '').toLowerCase();
+
+    if (a.includes('couldn') || a.includes('error') || a.includes('no match') || a.includes('not found')) {
+      return 'error';
+    }
+
+    const queueIntent = q.includes('remediate') || q.includes('fix ') ||
+      q.includes('queue remediation') || q.includes('deploy fix');
+    if (queueIntent && a.includes('queued')) return 'queued';
+
+    if (a.includes('critical') || a.includes('kev') || a.includes('exploit') || a.includes('unhealthy')) {
+      return 'critical';
+    }
+    if (a.includes('compliant') || a.includes('healthy') || a.includes('pass') || a.includes('✅') || a.includes('good')) {
+      return 'good';
+    }
+    if (a.includes('pipeline') || a.includes('pending') || a.includes('verified') || a.includes('remediation')) {
+      return 'pipeline';
+    }
+    return 'default';
+  }
+
   return Object.freeze({
     normalizeCveId,
     parseCSVRecords,
     captureSection,
     filterSuiteRecords,
     parseStructuredQuery,
+    classifyClippyReaction,
   });
 });
