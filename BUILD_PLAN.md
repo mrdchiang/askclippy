@@ -43,7 +43,8 @@ ShieldView -> RemFlow -> TheValidator
 - [x] Validate adapter-loaded records with the shared contract.
 - [x] Add conformance tests for AskClippy's local adapter fallback.
 - [ ] Add adapter conformance tests shared with the other suite repositories.
-- [ ] Decide how contract versions are distributed and synchronized.
+- [x] Define Launchpad as the canonical contract source, retain offline vendored
+  copies, and add scheduled CI drift detection.
 
 ### Phase 3 — Accessibility and UI quality
 
