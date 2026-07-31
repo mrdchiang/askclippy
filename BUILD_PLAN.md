@@ -66,7 +66,7 @@ ShieldView -> RemFlow -> TheValidator
 
 - [x] Extract and test CSV parsing, CVE normalization, and snapshot section parsing.
 - [x] Test shared-contract validators and live-pipeline record filtering.
-- [ ] Add automated tests for CSV parsing, query matching, and contract filters.
+- [x] Add automated tests for CSV parsing, query matching, and contract filters.
 - [ ] Test snapshot, upload, live-pipeline, adapter-fallback, and Ollama modes.
 - [ ] Test mobile, tablet, and desktop breakpoints.
 - [ ] Verify ShieldView -> RemFlow -> TheValidator -> AskClippy handoffs.

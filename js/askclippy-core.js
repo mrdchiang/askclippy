@@ -82,10 +82,44 @@
     return { validRecords, rejected };
   }
 
+  function parseStructuredQuery(question) {
+    const q = String(question || '').toLowerCase();
+    let filterSpec = null;
+
+    if (q.includes('kev') && (q.includes('deployed') || q.includes('not yet verified'))) {
+      filterSpec = { entity: 'findings', kev: true, deployed: true, unverified: true, limit: 50 };
+    } else if (q.includes('remediation rate') || q.includes('across all teams')) {
+      filterSpec = { entity: 'remediations', aggregate: 'rate', limit: 100 };
+    } else if (q.includes('eol') && q.includes('critical cve')) {
+      filterSpec = { entity: 'assets', eol: true, has_critical_cve: true, limit: 50 };
+    } else if (q.includes('cve') || q.includes('vulnerability') || q.includes('finding')) {
+      filterSpec = { entity: 'findings', limit: 50 };
+      if (q.includes('critical')) filterSpec.severity = ['Critical'];
+      else if (q.includes('high')) filterSpec.severity = ['High'];
+      if (q.includes('kev') || q.includes('exploit')) filterSpec.kev = true;
+      if (q.includes('active')) filterSpec.state = ['Active'];
+      if (q.includes('fixed')) filterSpec.state = ['Fixed'];
+      const cveMatch = q.match(/cve[-\s]*(\d{4}[-\s]*\d{4,})/i);
+      if (cveMatch) filterSpec.cve = 'CVE-' + cveMatch[1].replace(/[-\s]+/g, '-');
+    } else if (q.includes('asset') || q.includes('host') || q.includes('server') || q.includes('endpoint')) {
+      filterSpec = { entity: 'assets', limit: 50 };
+      if (q.includes('eol')) filterSpec.eol = true;
+      if (q.includes('unhealthy') || q.includes('poor health')) filterSpec.health = 'critical';
+    } else if (q.includes('remediation') || q.includes('deploy') || q.includes('queue') || q.includes('pending')) {
+      filterSpec = { entity: 'remediations', limit: 50 };
+      if (q.includes('pending')) filterSpec.state = ['pending'];
+      if (q.includes('deployed')) filterSpec.state = ['deployed'];
+      if (q.includes('verified')) filterSpec.state = ['verified'];
+    }
+
+    return filterSpec;
+  }
+
   return Object.freeze({
     normalizeCveId,
     parseCSVRecords,
     captureSection,
     filterSuiteRecords,
+    parseStructuredQuery,
   });
 });
