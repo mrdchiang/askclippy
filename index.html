@@ -342,7 +342,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[r
 <script src="./js/storage-fallback.js"></script>
 <script src="./js/askclippy-core.js"></script>
 <script>
-const { captureSection, normalizeCveId, parseCSVRecords } = window.AskClippyCore;
+const { captureSection, filterSuiteRecords, normalizeCveId, parseCSVRecords } = window.AskClippyCore;
 const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
 const storageAdapterPromise = (async function() {
@@ -634,19 +634,11 @@ async function loadLivePipeline() {
 }
 
 function validateSuiteRecords(records, validator, label) {
-  if (!Array.isArray(records)) return [];
-  if (typeof validator !== 'function') return records;
-  const valid = [];
-  let rejected = 0;
-  for (const record of records) {
-    const result = validator(record);
-    if (result && result.valid) valid.push(record);
-    else rejected++;
-  }
+  const { validRecords, rejected } = filterSuiteRecords(records, validator);
   if (rejected > 0) {
     console.warn('[AskClippy] Shared contract rejected ' + rejected + ' ' + label + ' record(s)');
   }
-  return valid;
+  return validRecords;
 }
 
 function updateFreshnessIndicator() {

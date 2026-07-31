@@ -68,5 +68,24 @@
     return captured.length > 0 ? captured : null;
   }
 
-  return Object.freeze({ normalizeCveId, parseCSVRecords, captureSection });
+  function filterSuiteRecords(records, validator) {
+    if (!Array.isArray(records)) return { validRecords: [], rejected: 0 };
+    if (typeof validator !== 'function') return { validRecords: records.slice(), rejected: 0 };
+
+    const validRecords = [];
+    let rejected = 0;
+    for (const record of records) {
+      const result = validator(record);
+      if (result && result.valid) validRecords.push(record);
+      else rejected++;
+    }
+    return { validRecords, rejected };
+  }
+
+  return Object.freeze({
+    normalizeCveId,
+    parseCSVRecords,
+    captureSection,
+    filterSuiteRecords,
+  });
 });
