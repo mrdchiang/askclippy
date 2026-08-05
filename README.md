@@ -20,9 +20,14 @@ AI-powered chat assistant for your security infrastructure. Ask about assets, CV
 
 - Single-file HTML (~1500 lines)
 - Vanilla JS, no build step, no dependencies
-- Shared `ollama-client.js` and `prompts.js` modules vendored from launchpad
-- Same-origin localStorage bus (`mrdchiang.github.io`)
+- AskClippy is the natural-language query layer across ShieldView, RemFlow, and TheValidator
+- Launchpad's async storage adapter is the persistence boundary
+- The shared contract owns suite keys, record shapes, and validation
+- Same-origin localStorage bus (`mrdchiang.github.io`) provides the current offline backend
+- The async adapter boundary allows a future IndexedDB or `security-tools-api` backend
 - CSP: `connect-src 'self' http://localhost:11434`
+
+See [BUILD_PLAN.md](BUILD_PLAN.md) for the suite-aware delivery plan and guardrails.
 
 ## Live Demo
 
@@ -39,7 +44,7 @@ AI-powered chat assistant for your security infrastructure. Ask about assets, CV
 
 | Tool | URL | Role |
 |---|---|---|
-| 🛡️ ShieldView | [amp-shield](https://mrdchiang.github.io/amp-shield/) | Vulnerability management |
+| 🛡️ ShieldView | [shieldview](https://mrdchiang.github.io/shieldview/) | Vulnerability management |
 | 🛠️ RemFlow | [remflow](https://mrdchiang.github.io/remflow/) | Remediation pipeline |
 | ⚡ TheValidator | [thevalidator](https://mrdchiang.github.io/thevalidator/) | Endpoint health + compliance |
 | 🚀 Launchpad | [launchpad](https://mrdchiang.github.io/launchpad/) | Tool index + pipeline view |
@@ -47,3 +52,12 @@ AI-powered chat assistant for your security infrastructure. Ask about assets, CV
 ## Technology
 
 HTML5 · CSS3 · Vanilla JavaScript · Ollama API · localStorage · Same-origin shared contract
+
+## Development
+
+The project has no runtime build step or third-party dependencies. Run the
+automated logic tests with:
+
+```bash
+npm test
+```

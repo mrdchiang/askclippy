@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' https://mrdchiang.github.io; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:11434 file: https://mrdchiang.github.io;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' 'unsafe-inline' https://mrdchiang.github.io; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:11434 file: https://mrdchiang.github.io; object-src 'none'; base-uri 'self'; form-action 'self';">
 <title>AskClippy — Ask Your Infrastructure</title>
 <style>
 :root {
   --bg: #060b18; --surface: #0c1225; --elevated: #111830;
-  --border: #1a2540; --text: #e8ecf4; --text-sec: #8899bb; --text-muted: #556888;
+  --border: #1a2540; --text: #e8ecf4; --text-sec: #8899bb; --text-muted: #6f82a5;
   --accent: #0066ff; --accent-glow: rgba(0,102,255,0.25);
   --critical: #ff4444; --high: #ff7722; --medium: #e6b800; --good: #22cc66;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -29,7 +29,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .sidebar .stat .val{font-size:20px;font-weight:700}
 .sidebar .stat .lbl{font-size:11px;color:var(--text-muted)}
 .sidebar .section{margin-bottom:16px}
-.chat-area{flex:1;display:flex;flex-direction:column}
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0}
 .messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
 .msg{max-width:85%;padding:14px 18px;border-radius:var(--radius);line-height:1.6;font-size:14px}
 .msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
@@ -57,6 +57,8 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .input-area button{background:var(--accent);border:none;border-radius:var(--radius);color:#fff;padding:12px 20px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s}
 .input-area button:hover{background:#0052cc}
 .input-area button:disabled{opacity:0.5;cursor:not-allowed}
+.messages,.input-area input{min-width:0}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:2px solid #66a3ff;outline-offset:3px}
 .badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600}
 .badge-crit{background:#351520;color:var(--critical)}
 .badge-high{background:#352215;color:var(--high)}
@@ -64,7 +66,9 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .badge-good{background:#123020;color:var(--good)}
 
 /* ── Animated Clippy ───────────────────────────────────── */
+.clippy-dock{display:contents}
 .clippy-corner{position:fixed;bottom:120px;right:40px;z-index:1000;cursor:pointer;opacity:0.92;filter:drop-shadow(0 0 20px rgba(0,102,255,0.15))}
+.clippy-svg{display:block;width:88px;height:110px}
 
 /* ── Hover ── */
 .clippy-corner:hover{filter:drop-shadow(0 0 40px var(--accent-glow)) brightness(1.15);opacity:1}
@@ -94,13 +98,16 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 /* ── Celebrate: super bounce + glow ── */
 .clippy-corner.celebrate{animation:clippy-bounce-happy 0.2s ease-in-out 8}
 /* ── Speech bubble ── */
-.clippy-bubble{position:fixed;bottom:230px;right:40px;background:var(--elevated);border:1px solid var(--accent);border-radius:16px 16px 16px 4px;padding:14px 20px;font-size:14px;max-width:320px;color:var(--text);z-index:999;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 30px var(--accent-glow);transition:all .4s cubic-bezier(0.34,1.56,0.64,1);line-height:1.6;font-weight:500}
+.clippy-bubble{position:fixed;bottom:170px;right:142px;background:var(--elevated);border:1px solid var(--accent);border-radius:16px;padding:14px 20px;font-size:14px;max-width:320px;color:var(--text);z-index:999;box-shadow:0 12px 48px rgba(0,0,0,0.5),0 0 30px var(--accent-glow);transition:opacity .3s ease,transform .3s cubic-bezier(0.34,1.56,0.64,1);line-height:1.6;font-weight:500}
+.clippy-bubble::after{content:'';position:absolute;bottom:18px;border:7px solid transparent}
+.clippy-bubble.bubble-left::after{right:-14px;border-left-color:var(--accent)}
+.clippy-bubble.bubble-right::after{left:-14px;border-right-color:var(--accent)}
 .clippy-bubble.hidden{opacity:0;pointer-events:none;transform:translateY(20px) scale(0.85)}
 .clippy-bubble:not(.hidden){animation:clippy-bubble-pop 0.35s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes clippy-bubble-pop{0%{opacity:0;transform:translateY(16px) scale(0.7)}100%{opacity:1;transform:translateY(0) scale(1)}}
 
 /* ── Bigger on desktop ── */
-@media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:120px;height:150px}.clippy-bubble{font-size:15px;max-width:360px}}
+@media(min-width:769px){.clippy-corner{bottom:140px;right:50px}.clippy-svg{width:120px;height:150px}.clippy-bubble{bottom:218px;right:186px;font-size:15px;max-width:360px}}
 
 /* ── Mobile ── */
 .clippy-corner{cursor:grab}.clippy-corner:active{cursor:grabbing}.clippy-corner.dragging{transition:none!important;opacity:0.8}
@@ -114,10 +121,33 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .clippy-float-tip::after{content:'';position:absolute;top:50%;right:-8px;left:auto;transform:translateY(-50%);border:6px solid transparent;border-left-color:var(--accent)}
 @media(max-width:768px){
   .sidebar{display:none}
+  .header{padding:12px 16px}
+  .header .sub{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .main,.chat-area{width:100%;min-width:0}
+  .upload-bar{padding:10px 16px;flex-wrap:wrap;gap:8px}
+  .src-selector{width:100%;min-width:0}
+  .src-selector select{flex:1;min-width:0;max-width:100%}
+  .upload-bar label{margin-left:0!important}
+  .upload-bar .file-info{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .messages{padding:16px}
+  .placeholder{padding:36px 0}
+  .placeholder .icon{font-size:38px}
+  .placeholder h2{font-size:17px}
+  .placeholder .examples{gap:8px}
+  .placeholder .examples button{max-width:100%;white-space:normal}
+  .prompt-chips{margin:8px 0 0;justify-content:center}
+  .prompt-chips .chip{white-space:normal;text-align:center}
+  .input-area{padding:12px 16px;gap:8px}
+  .input-area input{padding:12px}
+  .input-area button{padding:12px 16px}
   .msg{max-width:100%}
-  .clippy-corner{bottom:100px;right:10px;transform:scale(0.55)}
-  .clippy-corner:hover{transform:scale(0.7);filter:drop-shadow(0 0 20px var(--accent-glow))}
-  .clippy-bubble{bottom:170px;right:10px;max-width:230px;font-size:12px}
+  .clippy-dock{display:flex;align-items:flex-end;gap:12px;min-height:98px;padding:0 12px 8px 16px;flex-shrink:0}
+  .clippy-corner{position:relative;inset:auto;flex:0 0 72px}
+  .clippy-svg{width:72px;height:90px}
+  .clippy-corner:hover{filter:drop-shadow(0 0 20px var(--accent-glow))}
+  .clippy-bubble{position:relative;inset:auto;max-width:none;margin:0 0 8px;min-width:0;flex:1;font-size:12px}
+  .clippy-bubble.hidden{display:block;visibility:hidden}
+  .clippy-bubble::after{bottom:18px;right:-14px;left:auto;border-left-color:var(--accent);border-right-color:transparent}
 }
 
 /* ── Sparkles that actually drift ── */
@@ -155,8 +185,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 
 /* ── Prompt Chips ── */
 .prompt-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 24px 0;flex-shrink:0}
-.prompt-chips .chip{background:var(--elevated);border:1px solid var(--border);border-radius:20px;color:var(--text-sec);padding:5px 14px;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.prompt-chips .chip{background:var(--elevated);border:1px solid var(--border);border-radius:20px;color:var(--text-sec);padding:5px 14px;font-size:12px;font-family:inherit;cursor:pointer;transition:all .15s;white-space:nowrap}
 .prompt-chips .chip:hover{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}
+}
 
 /* ── How I Found This ── */
 .how-i-found{margin-top:10px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
@@ -192,7 +226,7 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
     </div>
     <div class="section" style="margin-top:16px">
       <h3>AI Mode</h3>
-      <div id="ai-mode-display" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
+      <div id="ai-mode-display" role="status" aria-live="polite" style="font-size:12px;background:var(--elevated);border:1px solid var(--border);border-radius:6px;padding:10px;line-height:1.6">
         <div><span id="mode-icon">🔍</span> <span id="mode-label">Local Search</span></div>
         <div style="color:var(--text-muted);margin-top:4px;font-size:11px" id="mode-detail">No AI API configured</div>
         <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--good)">🌐 <span id="offline-badge">100% offline capable</span></div>
@@ -238,9 +272,9 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
         </div>
         <div class="prompt-chips" style="margin-top:14px">
           <span style="font-size:11px;color:var(--text-muted);margin-right:4px">🔀 Cross-tool:</span>
-          <span class="chip" onclick="ask('Which KEV CVEs have been deployed but not yet verified?')">KEV deployed but unverified</span>
-          <span class="chip" onclick="ask('What is our overall remediation rate across all teams?')">Overall remediation rate</span>
-          <span class="chip" onclick="ask('Show me assets with EOL OS that have critical CVEs')">EOL OS + critical CVEs</span>
+          <button type="button" class="chip" onclick="ask('Which KEV CVEs have been deployed but not yet verified?')">KEV deployed but unverified</button>
+          <button type="button" class="chip" onclick="ask('What is our overall remediation rate across all teams?')">Overall remediation rate</button>
+          <button type="button" class="chip" onclick="ask('Show me assets with EOL OS that have critical CVEs')">EOL OS + critical CVEs</button>
         </div>
       </div>
     </div>
@@ -252,98 +286,91 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 </div>
 
 <!-- ── Animated Clippy ──────────────────────────────── -->
-<div class="clippy-bubble hidden" id="clippy-bubble"></div>
 <div class="clippy-confetti" id="clippy-confetti"></div>
-<div class="clippy-corner hidden" id="clippy-corner" onclick="clippyRandom()" title="Double-click for drama!">
+<div class="clippy-dock" id="clippy-dock">
+<div class="clippy-bubble hidden" id="clippy-bubble"></div>
+<div class="clippy-corner hidden" id="clippy-corner" role="button" tabindex="0" aria-label="Ask Clippy for a suggestion" onclick="clippyRandom()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();clippyRandom()}" title="Double-click for drama!">
   <div class="clippy-glow"></div>
-  <div class="clippy-float-tip">Click me!</div>
+  <div class="clippy-float-tip">Ask Clippy</div>
   <span class="clippy-sparkles">✨</span>
   <span class="clippy-dropsweat">💦</span>
   <span class="clippy-confetti-container"></span>
-  <svg class="clippy-svg" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Shadow -->
-    <ellipse cx="40" cy="95" rx="22" ry="4" fill="rgba(0,0,0,0.2)" class="clippy-shadow"/>
-
-    <!-- Paperclip body — two rounded rectangles stacked (classic shape) -->
-    <g class="clippy-torso">
-      <!-- Outer outline (silver body) -->
-      <rect x="24" y="6" width="32" height="64" rx="8" fill="url(#clip-grad)" stroke="var(--border)" stroke-width="1.5"/>
-      <!-- Inner cutout (hollow center) -->
-      <rect x="30" y="12" width="20" height="52" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="1"/>
-      <!-- Top inner loop detail -->
-      <rect x="30" y="12" width="20" height="16" rx="5" fill="url(#clip-grad)" stroke="none"/>
-      <rect x="30" y="12" width="20" height="16" rx="5" fill="var(--bg)" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
-    </g>
-
-    <!-- Shiny highlights -->
-    <rect x="26" y="8" width="6" height="58" rx="3" fill="rgba(255,255,255,0.15)"/>
-    <rect x="28" y="6" width="24" height="4" rx="2" fill="rgba(255,255,255,0.1)"/>
-
-    <!-- Eyes (on the upper body, inside the hollow area) -->
-    <circle cx="33" cy="25" r="4.5" fill="white" stroke="#1a1a2e" stroke-width="1.2"/>
-    <circle cx="33" cy="25" r="2.5" fill="#1a1a2e"/>
-    <circle cx="32" cy="23.5" r="1" fill="rgba(255,255,255,0.9)"/>
-
-    <circle cx="47" cy="25" r="4.5" fill="white" stroke="#1a1a2e" stroke-width="1.2"/>
-    <circle cx="47" cy="25" r="2.5" fill="#1a1a2e"/>
-    <circle cx="46" cy="23.5" r="1" fill="rgba(255,255,255,0.9)"/>
-
-    <!-- Eyebrows -->
-    <path class="clippy-brows" d="M27 17 Q33 15 39 17" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
-    <path class="clippy-brows" d="M41 17 Q47 15 53 17" stroke="var(--text)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
-
-    <!-- Mouth Smile -->
-    <path class="clippy-mouth" d="M34 36 Q40 42 46 36" stroke="var(--accent)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-
-    <!-- Arms -->
-    <g class="clippy-arms">
-      <path d="M 24 40 Q 10 36 8 48 Q 6 56 16 54" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M 56 40 Q 70 36 72 48 Q 74 56 64 54" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- Legs -->
-    <g class="clippy-legs">
-      <path d="M 32 70 Q 26 80 24 88 Q 23 92 28 92" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M 48 70 Q 54 80 56 88 Q 57 92 52 92" stroke="url(#clip-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
-    </g>
-
+  <svg class="clippy-svg" viewBox="0 0 120 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
-      <linearGradient id="clip-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#66bbff"/>
-        <stop offset="30%" stop-color="#3399ff"/>
-        <stop offset="70%" stop-color="#0066cc"/>
-        <stop offset="100%" stop-color="#003d99"/>
+      <linearGradient id="clip-metal" x1="31" y1="20" x2="99" y2="132" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#f4f8ff"/>
+        <stop offset="0.22" stop-color="#a9b9cf"/>
+        <stop offset="0.48" stop-color="#dfe8f5"/>
+        <stop offset="0.72" stop-color="#71839e"/>
+        <stop offset="1" stop-color="#c4d2e5"/>
       </linearGradient>
+      <linearGradient id="clip-highlight" x1="48" y1="22" x2="77" y2="124" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#ffffff" stop-opacity="0.9"/>
+        <stop offset="0.55" stop-color="#9fc4ff" stop-opacity="0.5"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0.15"/>
+      </linearGradient>
+      <radialGradient id="eye-white" cx="0" cy="0" r="1" gradientTransform="translate(59 42) rotate(58) scale(16)">
+        <stop stop-color="#ffffff"/>
+        <stop offset="1" stop-color="#d8e2f0"/>
+      </radialGradient>
+      <filter id="eye-shadow" x="-30%" y="-30%" width="160%" height="170%">
+        <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#020611" flood-opacity="0.55"/>
+      </filter>
     </defs>
+
+    <ellipse class="clippy-shadow" cx="62" cy="139" rx="29" ry="5" fill="#000" opacity="0.28"/>
+
+    <!-- One continuous metal loop: unmistakably a paperclip, not a robot body. -->
+    <path d="M82 32C96 37 102 50 98 64L82 116C78 131 61 138 48 131C36 125 31 112 35 99L51 47C55 34 68 26 81 30C93 34 99 46 95 58L79 109C77 117 69 121 62 118C55 115 52 108 54 101L69 53"
+      stroke="#26364d" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+    <path d="M82 32C96 37 102 50 98 64L82 116C78 131 61 138 48 131C36 125 31 112 35 99L51 47C55 34 68 26 81 30C93 34 99 46 95 58L79 109C77 117 69 121 62 118C55 115 52 108 54 101L69 53"
+      stroke="url(#clip-metal)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M79 34C91 38 96 49 93 61L77 112C75 119 68 123 62 120"
+      stroke="url(#clip-highlight)" stroke-width="2.6" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Floating expressive eyes, closer to the classic assistant silhouette. -->
+    <g class="clippy-eyes" filter="url(#eye-shadow)">
+      <ellipse cx="59" cy="46" rx="11" ry="13" fill="url(#eye-white)" stroke="#34445c" stroke-width="2"/>
+      <ellipse cx="81" cy="47" rx="11" ry="13" fill="url(#eye-white)" stroke="#34445c" stroke-width="2"/>
+      <circle cx="62" cy="48" r="4.2" fill="#07101f"/>
+      <circle cx="84" cy="49" r="4.2" fill="#07101f"/>
+      <circle cx="60.5" cy="46.5" r="1.35" fill="#ffffff"/>
+      <circle cx="82.5" cy="47.5" r="1.35" fill="#ffffff"/>
+    </g>
+    <g class="clippy-brows" stroke="#dbe7f7" stroke-width="3" stroke-linecap="round" opacity="0.9">
+      <path d="M49 34Q58 29 67 33"/>
+      <path d="M73 34Q82 30 91 35"/>
+    </g>
   </svg>
 </div>
+</div>
 
+<script src="./js/storage-fallback.js"></script>
+<script src="./js/askclippy-core.js"></script>
 <script>
+const { captureSection, classifyClippyReaction, extractKnowledgeStats, filterSuiteRecords, normalizeCveId, ollamaModelAvailable, parseCSVRecords, parseStructuredQuery, shouldUseOllama } = window.AskClippyCore;
+const { createLocalStorageAdapter } = window.AskClippyStorage;
 // ════ Storage Adapter — Dynamic Import from Launchpad ────────
-(async function() {
+const storageAdapterPromise = (async function() {
   try {
-    const { default: storage } = await import('https://mrdchiang.github.io/launchpad/shared/storage-adapter.js');
+    const module = await import('https://mrdchiang.github.io/launchpad/shared/storage-adapter.js');
+    const storage = module.storage || module.default;
+    if (!storage || typeof storage.readCollection !== 'function') {
+      throw new Error('Launchpad adapter does not expose the expected storage interface');
+    }
     window.Storage = storage;
     console.log('[AskClippy] Storage adapter loaded from launchpad');
+    return storage;
   } catch(e) {
     console.warn('[AskClippy] Storage adapter fetch failed, using localStorage fallback:', e.message);
-    window.Storage = {
-      async read(key) { return localStorage.getItem(key); },
-      async write(key, val) { localStorage.setItem(key, val); }
-    };
-  }
-  // Smoke test — verify Storage is functional
-  try {
-    await window.Storage.write('__askclippy_storage_test__', 'ok');
-    var testVal = await window.Storage.read('__askclippy_storage_test__');
-    console.log('[AskClippy] Storage adapter test:', testVal === 'ok' ? 'PASS' : 'FAIL');
-  } catch(testErr) {
-    console.error('[AskClippy] Storage adapter test FAIL:', testErr.message);
+    const fallback = createLocalStorageAdapter(localStorage, console);
+    window.Storage = fallback;
+    return fallback;
   }
 })();
-// ════ Contract Version Check ─────────────────────────────────(async function(){  var CV = KEYS.CONTRACT_VERSION_KEY;  var VER = '1.0.0';  try {    var stored = await Storage.read(CV);    if (!stored) { await Storage.write(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = async function(){ b.remove(); await Storage.write(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
+// ════ Contract Version Check ─────────────────────────────────(function(){  var CV = 'security-tools:contract-version';  var VER = '2.0.0';  try {    var stored = localStorage.getItem(CV);    if (!stored) { localStorage.setItem(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = function(){ b.remove(); localStorage.setItem(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
 // ════ Error Catcher ──────────────────────────────────────────
-(async function(){'use strict';const SK=KEYS.ERROR_LOG,MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';async function gl(){try{return JSON.parse(await Storage.read(SK)||'[]')}catch(e){return[]}}async function sl(l){try{while(l.length>MX)l.shift();await Storage.write(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();await Storage.write(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;gl().then(function(l){l.push(e);return sl(l)}).catch(function(){})}
+(function(){'use strict';const SK='security-tools:error-log',MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';function gl(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}function sl(l){try{while(l.length>MX)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;const l=gl();l.push(e);sl(l)}
 window.onerror=function(m,s,l,c,err){ae({type:'runtime-error',message:String(m),source:s||'',line:l||0,col:c||0,stack:err&&err.stack?String(err.stack).slice(0,2000):''});return false};
 window.addEventListener('unhandledrejection',function(e){const r=e.reason;ae({type:'unhandled-rejection',message:String(r),stack:r&&r.stack?String(r.stack).slice(0,2000):''})});
 var oce=console.error;console.error=function(){try{var a=Array.prototype.slice.call(arguments);ae({type:'console-error',message:a.map(function(x){try{return typeof x==='object'?JSON.stringify(x,null,2).slice(0,500):String(x)}catch(e){return String(x)}}).join(' ').slice(0,2000),args:a.length})}catch(e){}return oce.apply(console,arguments)};
@@ -366,12 +393,66 @@ const KEYS = {
   KEV_CATALOG:             'security-tools:kev-catalog',
 };
 
+const contractModulePromise = import('./js/shared/contract.js').catch(error => {
+  console.warn('[AskClippy] Shared contract unavailable; using guarded local reads:', error.message);
+  return null;
+});
+
 // Live pipeline data caching
 let liveFindings = [];
 let liveAssets = [];
 let liveRemediations = [];
 let liveVerifications = [];
 let liveLastUpdated = null;
+
+function uniqueNonEmpty(values) {
+  return [...new Set((values || []).map(v => String(v || '').trim()).filter(Boolean))];
+}
+function normalizeIdentityPart(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+function findingIdentityKey(finding) {
+  if (!finding) return '';
+  const existing = finding.findingId || finding.id;
+  if (existing !== undefined && existing !== null && existing !== '') return String(existing);
+  return [finding.cve, finding.asset || finding.hostname, finding.port || '', finding.pluginId || '', finding.check || finding.name || '']
+    .map(normalizeIdentityPart)
+    .join('|');
+}
+
+function isCanonicalRemediation(item) {
+  return !!(item && typeof item.cve === 'string' && item.cve &&
+    typeof item.name === 'string' && item.name &&
+    Array.isArray(item.assets) && item.assets.length > 0 &&
+    ['pending','queued','deployed','verified','failed','blocked','rolledBack'].includes(item.status));
+}
+
+async function readRemediationQueueForWrite() {
+  try {
+    const storage = await storageAdapterPromise;
+    const records = await storage.readCollection(KEYS.REMEDIATION_QUEUE);
+    return Array.isArray(records) ? records : null;
+  } catch(e) {
+    console.warn('AskClippy: remediation queue read failed; refusing to overwrite existing queue', e);
+    return null;
+  }
+}
+
+async function persistRemediationQueueSafely(queue, lastItem) {
+  try {
+    if (!Array.isArray(queue) || queue.some(item => !isCanonicalRemediation(item))) return false;
+    const storage = await storageAdapterPromise;
+    if (!await storage.writeCollection(KEYS.REMEDIATION_QUEUE, queue)) return false;
+    const stored = await storage.readCollection(KEYS.REMEDIATION_QUEUE);
+    if (!Array.isArray(stored) || stored.length !== queue.length) return false;
+    if (lastItem && !await storage.write(KEYS.LAST_REMEDIATION, lastItem)) return false;
+    return true;
+  } catch(e) {
+    console.warn('AskClippy: remediation queue write failed; source records were not changed', e);
+    return false;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 //  ASKCLIPPY — Talk to your VM data
@@ -384,6 +465,8 @@ const KNOWLEDGE_PATH = "knowledge-snapshot.md";
 const USE_OLLAMA = true;
 const OLLAMA_URL = "http://localhost:11434/api/generate";
 const OLLAMA_MODEL = "phi3:mini"; // or "mistral", "codellama", "llama3.2"
+const OLLAMA_TIMEOUT_MS = 3000;
+const OLLAMA_TAGS_URL = "http://localhost:11434/api/tags";
 
 // const USE_OLLAMA = false;
 // const OLLAMA_URL = "http://localhost:11434/api/generate";
@@ -391,6 +474,20 @@ const OLLAMA_MODEL = "phi3:mini"; // or "mistral", "codellama", "llama3.2"
 
 let knowledge = "";
 let uploadedData = null; // raw parsed upload data
+let uploadedKnowledge = "";
+let ollamaState = USE_OLLAMA ? "checking" : "disabled";
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_UPLOAD_RECORDS = 50000;
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // ── Load knowledge snapshot ───────────────────────────────
 async function loadKnowledge() {
@@ -411,16 +508,12 @@ async function loadKnowledge() {
 }
 
 function extractStats(md) {
-  const mAssets = md.match(/(\d+) assets/);
-  const mFindings = md.match(/· (\d+) active/);
-  const mCVEs = md.match(/(\d+) CVEs/);
-  const mHealth = md.match(/health: (\d+)%/);
-  const mGPO = md.match(/GPO compliance: (\d+)%/);
-  if (mAssets) document.getElementById("stat-assets").textContent = mAssets[1];
-  if (mFindings) document.getElementById("stat-findings").textContent = mFindings[1];
-  if (mCVEs) document.getElementById("stat-cves").textContent = mCVEs[1];
-  if (mHealth) document.getElementById("stat-health").textContent = mHealth[1] + "%";
-  if (mGPO) document.getElementById("stat-gpo").textContent = mGPO[1] + "%";
+  const stats = extractKnowledgeStats(md);
+  document.getElementById("stat-assets").textContent = stats.assets === null ? "—" : stats.assets;
+  document.getElementById("stat-findings").textContent = stats.findings === null ? "—" : stats.findings;
+  document.getElementById("stat-cves").textContent = stats.cves === null ? "—" : stats.cves;
+  document.getElementById("stat-health").textContent = stats.health === null ? "—" : stats.health + "%";
+  document.getElementById("stat-gpo").textContent = stats.gpo === null ? "—" : stats.gpo + "%";
 }
 
 function updateModeDisplay() {
@@ -428,17 +521,52 @@ function updateModeDisplay() {
   const label = document.getElementById("mode-label");
   const detail = document.getElementById("mode-detail");
   const offline = document.getElementById("offline-badge");
-  if (USE_OLLAMA) {
+  if (ollamaState === "available") {
     icon.textContent = "🧠";
     label.textContent = "Local LLM (" + OLLAMA_MODEL + ")";
-    detail.textContent = "via Ollama — fully offline";
+    detail.textContent = "Ollama connected · model available";
+    if (offline) offline.textContent = "✅ No internet required";
+  } else if (ollamaState === "checking") {
+    icon.textContent = "⏳";
+    label.textContent = "Checking local AI…";
+    detail.textContent = "Looking for Ollama and " + OLLAMA_MODEL;
+    if (offline) offline.textContent = "✅ Local retrieval remains available";
+  } else if (ollamaState === "missing-model") {
+    icon.textContent = "🔍";
+    label.textContent = "Local Search";
+    detail.textContent = "Ollama connected · " + OLLAMA_MODEL + " is not installed";
+    if (offline) offline.textContent = "✅ Using offline local retrieval";
+  } else if (ollamaState === "unavailable") {
+    icon.textContent = "🔍";
+    label.textContent = "Local Search";
+    detail.textContent = "Ollama unavailable · using local retrieval";
     if (offline) offline.textContent = "✅ No internet required";
   } else {
     icon.textContent = "🔍";
     label.textContent = "Local Search";
-    detail.textContent = "Keyword matching on knowledge snapshot";
+    detail.textContent = "Ollama disabled · using local retrieval";
     if (offline) offline.textContent = "✅ 100% offline capable";
   }
+}
+
+async function checkOllamaAvailability() {
+  if (!USE_OLLAMA) {
+    ollamaState = "disabled";
+    updateModeDisplay();
+    return;
+  }
+
+  ollamaState = "checking";
+  updateModeDisplay();
+  try {
+    const response = await fetchWithTimeout(OLLAMA_TAGS_URL, { method: "GET" }, OLLAMA_TIMEOUT_MS);
+    if (!response.ok) throw new Error("Ollama " + response.status);
+    const data = await response.json();
+    ollamaState = ollamaModelAvailable(data.models, OLLAMA_MODEL) ? "available" : "missing-model";
+  } catch (error) {
+    ollamaState = "unavailable";
+  }
+  updateModeDisplay();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -447,14 +575,14 @@ function updateModeDisplay() {
 
 let currentSource = "snapshot";
 
-function switchDataSource(source) {
+async function switchDataSource(source) {
   currentSource = source;
   const freshnessEl = document.getElementById("freshness");
   const uploadStatus = document.getElementById("uploadStatus");
   const fileInfo = document.getElementById("fileInfo");
 
   if (source === "live") {
-    loadLivePipeline().catch(function(e){ clippySay('Live pipeline load error: ' + e.message); });
+    await loadLivePipeline();
     freshnessEl.style.display = "";
     updateFreshnessIndicator();
     if (uploadStatus) uploadStatus.textContent = "🔄 Live";
@@ -467,6 +595,9 @@ function switchDataSource(source) {
       if (uploadStatus) uploadStatus.textContent = "";
       if (uploadStatus) uploadStatus.className = "status";
       if (fileInfo) fileInfo.textContent = "No file loaded";
+    } else {
+      knowledge = uploadedKnowledge;
+      extractStats(knowledge);
     }
   } else {
     // snapshot
@@ -484,37 +615,34 @@ function switchDataSource(source) {
 
 async function loadLivePipeline() {
   try {
-    const findingsRaw = await Storage.read(KEYS.IMPORTED_FINDINGS);
-    const assetsRaw = await Storage.read(KEYS.IMPORTED_ASSETS);
-    const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
-    const validatedRaw = await Storage.read(KEYS.VALIDATED_REMEDIATIONS);
-    const verifiedRaw = await Storage.read(KEYS.VERIFIED_QUEUE);
-    const kevRaw = await Storage.read(KEYS.KEV_CATALOG);
+    const [storage, contract] = await Promise.all([storageAdapterPromise, contractModulePromise]);
+    const [findings, assets, remediations, validated, verified] = await Promise.all([
+      storage.readCollection(KEYS.IMPORTED_FINDINGS),
+      storage.readCollection(KEYS.IMPORTED_ASSETS),
+      storage.readCollection(KEYS.REMEDIATION_QUEUE),
+      storage.readCollection(KEYS.VALIDATED_REMEDIATIONS),
+      storage.readCollection(KEYS.VERIFIED_QUEUE),
+    ]);
 
-    liveFindings = findingsRaw ? JSON.parse(findingsRaw) : [];
-    liveAssets = assetsRaw ? JSON.parse(assetsRaw) : [];
-    liveRemediations = queueRaw ? JSON.parse(queueRaw) : [];
-    liveVerifications = validatedRaw ? JSON.parse(validatedRaw) : [];
-
-    // Merge verified queue
-    if (verifiedRaw) {
-      try { liveVerifications = liveVerifications.concat(JSON.parse(verifiedRaw)); } catch(e) {}
-    }
+    liveFindings = validateSuiteRecords(findings, contract && contract.validateFinding, 'findings');
+    liveAssets = validateSuiteRecords(assets, contract && contract.validateAsset, 'assets');
+    liveRemediations = validateSuiteRecords(remediations, contract && contract.validateRemediation, 'remediations');
+    liveVerifications = validateSuiteRecords(validated.concat(verified), contract && contract.validateVerification, 'verifications');
 
     // Build knowledge from live data
-    let md = "# AskClippy Knowledge — Live Pipeline\\n## Overview\\n";
-    md += "- " + liveFindings.length + " findings, " + liveAssets.length + " assets\\n";
-    md += "- " + liveRemediations.length + " pending remediations, " + liveVerifications.length + " verified\\n\\n";
+    let md = "# AskClippy Knowledge — Live Pipeline\n## Overview\n";
+    md += "- " + liveFindings.length + " findings, " + liveAssets.length + " assets\n";
+    md += "- " + liveRemediations.length + " pending remediations, " + liveVerifications.length + " verified\n\n";
 
-    md += "## Assets\\n";
+    md += "## Assets\n";
     for (const a of (liveAssets || []).slice(0, 200)) {
       const name = a.hostname || a.name || a.ip || "?";
       const os = a.os || "?";
       const ip = a.ip || "?";
-      md += "- " + name + " (OS:" + os + ", IP:" + ip + ")\\n";
+      md += "- " + name + " (OS:" + os + ", IP:" + ip + ")\n";
     }
 
-    md += "\\n## Findings\\n";
+    md += "\n## Findings\n";
     for (const f of (liveFindings || []).slice(0, 300)) {
       const cve = f.cve || "?";
       const check = f.check || f.name || "?";
@@ -522,21 +650,20 @@ async function loadLivePipeline() {
       const asset = f.asset || f.hostname || "?";
       const kevTag = f.kev ? " [KEV]" : "";
       const state = f.state || "Active";
-      md += "- " + cve + ": " + check + " | " + sev + " | " + asset + " | " + state + kevTag + "\\n";
+      md += "- " + cve + ": " + check + " | " + sev + " | " + asset + " | " + state + kevTag + "\n";
     }
 
-    md += "\\n## Remediation Queue\\n";
+    md += "\n## Remediation Queue\n";
     for (const r of (liveRemediations || []).slice(0, 100)) {
       const cve = r.cve || "?";
       const status = r.status || "pending";
-      const hostname = r.hostname || "?";
-      md += "- " + cve + " → " + status + " on " + hostname + "\\n";
+      const assets = uniqueNonEmpty([...(r.assets || []), ...(r.targets || []), r.asset, r.hostname]);
+      md += "- " + cve + " → " + status + " on " + (assets.length ? assets.join(", ") : "?") + "\n";
     }
-
-    md += "\\n## Verified Remediations\\n";
+    md += "\n## Verified Remediations\n";
     for (const v of (liveVerifications || []).slice(0, 100)) {
       const cve = v.cve || "?";
-      md += "- " + cve + " verified\\n";
+      md += "- " + cve + " verified\n";
     }
 
     knowledge = md;
@@ -547,6 +674,14 @@ async function loadLivePipeline() {
     knowledge = "";
     clippySay("Could not load live pipeline data: " + e.message);
   }
+}
+
+function validateSuiteRecords(records, validator, label) {
+  const { validRecords, rejected } = filterSuiteRecords(records, validator);
+  if (rejected > 0) {
+    console.warn('[AskClippy] Shared contract rejected ' + rejected + ' ' + label + ' record(s)');
+  }
+  return validRecords;
 }
 
 function updateFreshnessIndicator() {
@@ -582,10 +717,23 @@ function updateFreshnessIndicator() {
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
   const status = document.getElementById("uploadStatus");
   const info = document.getElementById("fileInfo");
 
+  if (file.size > MAX_UPLOAD_BYTES) {
+    status.textContent = "⚠️ File too large";
+    status.className = "status";
+    info.textContent = "Maximum upload size is 10 MB";
+    event.target.value = "";
+    clippySay("That file is too large. Please use a file under 10 MB.");
+    return;
+  }
+
+  currentSource = "upload";
+  document.getElementById("dataSource").value = "upload";
+  document.getElementById("freshness").style.display = "none";
+
+  const reader = new FileReader();
   status.textContent = "⏳ Processing...";
   status.className = "status processing";
   info.textContent = file.name + " (" + (file.size / 1024).toFixed(0) + " KB)";
@@ -601,6 +749,10 @@ function handleFileUpload(event) {
       catch(err) { status.textContent = "⚠️ Parse error"; status.className = "status"; }
     }
   };
+  reader.onerror = function() {
+    status.textContent = "⚠️ Could not read file";
+    status.className = "status";
+  };
   reader.readAsText(file);
 }
 
@@ -609,31 +761,33 @@ function parseJSONUpload(text, filename) {
   uploadedData = data;
   // Convert to knowledge markdown
   const md = jsonToKnowledge(data, filename);
+  uploadedKnowledge = md;
   knowledge = md;
   extractStats(md);
   document.getElementById("uploadStatus").textContent = "✅ " + (data.assets ? data.assets.length : "?") + " assets loaded";
   document.getElementById("uploadStatus").className = "status loaded";
   document.getElementById("placeholder").style.display = "none";
-  addMessage("ai", "✅ Loaded **" + filename + "** — " + knowledge.split("\\n").filter(l => l.startsWith("- ")).length + " data points. Ask me anything!");
+  addMessage("ai", "✅ Loaded **" + filename + "** — " + knowledge.split("\n").filter(l => l.startsWith("- ")).length + " data points. Ask me anything!");
   clippySay("Data loaded! What do you want to know?");
 }
 
 function parseCSVUpload(text, filename) {
-  const lines = text.split("\\n").filter(l => l.trim());
-  if (lines.length < 2) throw new Error("Empty CSV");
-  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-  const rows = lines.slice(1).map(l => {
-    const vals = l.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+  const records = parseCSVRecords(text, MAX_UPLOAD_RECORDS + 2);
+  if (records.length < 2) throw new Error("Empty CSV");
+  const headers = records[0].map(h => h.trim().toLowerCase());
+  const truncated = records.length > MAX_UPLOAD_RECORDS + 1;
+  const rows = records.slice(1, MAX_UPLOAD_RECORDS + 1).map(vals => {
     const row = {};
-    headers.forEach((h, i) => row[h] = vals[i] || "");
+    headers.forEach((h, i) => row[h] = (vals[i] || "").trim());
     return row;
   });
   uploadedData = { rows, headers };
   // Build knowledge from CSV
   const md = csvToKnowledge(rows, headers, filename);
+  uploadedKnowledge = md;
   knowledge = md;
   extractStats(md);
-  document.getElementById("uploadStatus").textContent = "✅ " + rows.length + " rows loaded";
+  document.getElementById("uploadStatus").textContent = "✅ " + rows.length + " rows loaded" + (truncated ? " (limit reached)" : "");
   document.getElementById("uploadStatus").className = "status loaded";
   document.getElementById("placeholder").style.display = "none";
   addMessage("ai", "✅ Loaded **" + filename + "** (" + rows.length + " rows). Ask me about your scan data!");
@@ -642,37 +796,37 @@ function parseCSVUpload(text, filename) {
 
 // ── Convert uploaded data to knowledge markdown ──────────
 function jsonToKnowledge(data, filename) {
-  let md = "# AskClippy Knowledge — " + filename + "\\n## Overview\\n";
+  let md = "# AskClippy Knowledge — " + filename + "\n## Overview\n";
   const assets = data.assets || data.hosts || [];
   const findings = data.findings || data.vulnerabilities || [];
   const cves = data.cves || {};
 
-  md += "- " + assets.length + " assets, " + findings.length + " findings\\n\\n";
-  md += "## Assets\\n";
+  md += "- " + assets.length + " assets, " + findings.length + " findings\n\n";
+  md += "## Assets\n";
   for (const a of assets.slice(0, 200)) {
     const name = a.hostname || a.name || a.ip || "?";
     const os = a.os || "?";
     const ip = a.ip || "?";
     const sev = a.severity || "";
-    md += "- " + name + " (" + os + ", " + ip + ")" + (sev ? " [" + sev + "]" : "") + "\\n";
+    md += "- " + name + " (" + os + ", " + ip + ")" + (sev ? " [" + sev + "]" : "") + "\n";
   }
-  if (assets.length > 200) md += "- ...and " + (assets.length - 200) + " more assets\\n";
-  md += "\\n## Findings\\n";
+  if (assets.length > 200) md += "- ...and " + (assets.length - 200) + " more assets\n";
+  md += "\n## Findings\n";
   for (const f of findings.slice(0, 300)) {
     const cve = f.cve || f.plugin_id || "?";
     const name = f.name || f.title || "?";
     const sev = f.severity || f.risk || "Medium";
     const host = f.host || f.ip || f.asset || "?";
-    md += "- " + cve + ": " + name + " | " + sev + " | " + host + "\\n";
+    md += "- " + cve + ": " + name + " | " + sev + " | " + host + "\n";
   }
   return md;
 }
 
 function csvToKnowledge(rows, headers, filename) {
-  let md = "# AskClippy Knowledge — " + filename + "\\n## Overview\\n- " + rows.length + " records\\n\\n## Data\\n";
+  let md = "# AskClippy Knowledge — " + filename + "\n## Overview\n- " + rows.length + " records\n\n## Data\n";
   for (const row of rows.slice(0, 300)) {
     const vals = Object.entries(row).map(([k,v]) => k + ": " + v).join(" | ");
-    md += "- " + vals + "\\n";
+    md += "- " + vals + "\n";
   }
   return md;
 }
@@ -686,7 +840,7 @@ let lastRetrievalMode = null; // 'structured' | 'keyword_fallback'
 
 async function queryAI(question) {
   // Step 1: Try structured retrieval (two-step approach)
-  if (currentSource === "live" && (liveFindings.length > 0 || liveRemediations.length > 0)) {
+  if (currentSource === "live") {
     const structured = structuredRetrieval(question);
     if (structured) {
       lastFilterSpec = structured.filterSpec;
@@ -698,7 +852,7 @@ async function queryAI(question) {
   }
 
   // Step 2: LLM-based retrieval (if Ollama available)
-  if (USE_OLLAMA) {
+  if (shouldUseOllama(currentSource, USE_OLLAMA, ollamaState)) {
     try {
       const result = await llmStructuredRetrieval(question);
       if (result) return result;
@@ -707,47 +861,12 @@ async function queryAI(question) {
 
   // Step 3: Fall back to keyword search
   lastRetrievalMode = 'keyword_fallback';
-  return await keywordSearch(question);
+  return keywordSearch(question);
 }
 
 // ── Structured Retrieval: parse question → filter spec → execute locally ──
 function structuredRetrieval(question) {
-  const q = question.toLowerCase();
-  let filterSpec = null;
-
-  // Cross-tool queries
-  if (q.includes("kev") && (q.includes("deployed") || q.includes("not yet verified"))) {
-    filterSpec = { entity: "findings", kev: true, deployed: true, unverified: true, limit: 50 };
-  }
-  else if (q.includes("remediation rate") || q.includes("across all teams")) {
-    filterSpec = { entity: "remediations", aggregate: "rate", limit: 100 };
-  }
-  else if (q.includes("eol") && q.includes("critical cve")) {
-    filterSpec = { entity: "assets", eol: true, has_critical_cve: true, limit: 50 };
-  }
-  // General entity queries
-  else if (q.includes("cve") || q.includes("vulnerability") || q.includes("finding")) {
-    filterSpec = { entity: "findings", limit: 50 };
-    if (q.includes("critical")) filterSpec.severity = ["Critical"];
-    else if (q.includes("high")) filterSpec.severity = ["High"];
-    if (q.includes("kev") || q.includes("exploit")) filterSpec.kev = true;
-    if (q.includes("active")) filterSpec.state = ["Active"];
-    if (q.includes("fixed")) filterSpec.state = ["Fixed"];
-    // Extract CVE ID if present
-    const cveMatch = q.match(/cve[-\s]*(\d{4}[-\s]*\d{4,})/i);
-    if (cveMatch) filterSpec.cve = "CVE-" + cveMatch[1].replace(/[-\s]+/g, "-");
-  }
-  else if (q.includes("asset") || q.includes("host") || q.includes("server") || q.includes("endpoint")) {
-    filterSpec = { entity: "assets", limit: 50 };
-    if (q.includes("eol")) filterSpec.eol = true;
-    if (q.includes("unhealthy") || q.includes("poor health")) filterSpec.health = "critical";
-  }
-  else if (q.includes("remediation") || q.includes("deploy") || q.includes("queue") || q.includes("pending")) {
-    filterSpec = { entity: "remediations", limit: 50 };
-    if (q.includes("pending")) filterSpec.state = ["pending"];
-    if (q.includes("deployed")) filterSpec.state = ["deployed"];
-    if (q.includes("verified")) filterSpec.state = ["verified"];
-  }
+  const filterSpec = parseStructuredQuery(question);
 
   if (!filterSpec) return null;
 
@@ -799,7 +918,7 @@ function executeFilter(spec) {
         type: "cve",
         cve: f.cve,
         label: f.cve,
-        url: "https://mrdchiang.github.io/amp-shield/#/findings?filter=" + encodeURIComponent(f.cve || "")
+        url: "https://mrdchiang.github.io/shieldview/#/findings?filter=" + encodeURIComponent(f.cve || "")
       }));
     } else {
       answer = "No findings matched the filter.";
@@ -892,7 +1011,7 @@ Question: ${question}
 
 JSON:`;
 
-    const resp = await fetch(OLLAMA_URL, {
+    const resp = await fetchWithTimeout(OLLAMA_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -901,7 +1020,7 @@ JSON:`;
         stream: false,
         options: { temperature: 0, num_predict: 256 }
       }),
-    });
+    }, OLLAMA_TIMEOUT_MS);
 
     if (!resp.ok) throw new Error("Ollama " + resp.status);
     const data = await resp.json();
@@ -916,7 +1035,7 @@ JSON:`;
     } catch(e) {
       // Retry once with error appended
       const retryPrompt = prompt + "\nERROR in your previous JSON: " + e.message + "\nFix it and output ONLY valid JSON:\n";
-      const retryResp = await fetch(OLLAMA_URL, {
+      const retryResp = await fetchWithTimeout(OLLAMA_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -925,7 +1044,7 @@ JSON:`;
           stream: false,
           options: { temperature: 0, num_predict: 256 }
         }),
-      });
+      }, OLLAMA_TIMEOUT_MS);
       if (!retryResp.ok) throw new Error("Retry failed");
       const retryData = await retryResp.json();
       let retryStr = (retryData.response || "").trim().replace(/```json\s*/gi, "").replace(/```\s*$/g, "").trim();
@@ -955,6 +1074,8 @@ JSON:`;
       matchedCount: result.matchedCount
     };
   } catch(e) {
+    ollamaState = "unavailable";
+    updateModeDisplay();
     return null;
   }
 }
@@ -963,51 +1084,51 @@ JSON:`;
 async function keywordSearch(question) {
   const q = question.toLowerCase();
   if (!knowledge) return { answer: "No knowledge loaded. Upload a scan file or switch to Live Pipeline!", sources: [] };
-  const lines = knowledge.split("\\n");
+  const lines = knowledge.split("\n");
   let answer = "";
   let sources = [];
 
   if (q.includes("critical") && (q.includes("kev") || q.includes("exploit"))) {
     const cap = captureSection(lines, "Critical KEV CVEs", "All Active CVEs");
-    if (cap) { answer = "**Critical KEV CVEs:**\\n" + cap.join("\\n"); sources = cap.map(l => ({type:"cve",label:l.match(/CVE-[\\d-]+/)?.[0]||"?",url:""})).filter(s=>s.label!=="?"); }
+    if (cap) { answer = "**Critical KEV CVEs:**\n" + cap.join("\n"); sources = cap.map(l => ({type:"cve",label:l.match(/CVE-[\d-]+/)?.[0]||"?",url:""})).filter(s=>s.label!=="?"); }
   }
   else if (q.includes("health") || q.includes("unhealthy") || q.includes("dc ") || q.includes("domain controller")) {
     const cap = captureSection(lines, "Assets With Critical Findings", "All Assets");
     const dcs = (cap || []).filter(l => l.toLowerCase().includes("dc-"));
-    if (dcs.length > 0) { answer = "**Domain Controllers:**\\n" + dcs.join("\\n"); sources = dcs.map(l => ({type:"asset",label:l.match(/-\\s*(\\S+)/)?.[1]||"?",url:""})); }
-    else if (cap) { answer = "**Assets With Critical Findings:**\\n" + cap.join("\\n"); }
+    if (dcs.length > 0) { answer = "**Domain Controllers:**\n" + dcs.join("\n"); sources = dcs.map(l => ({type:"asset",label:l.match(/-\s*(\S+)/)?.[1]||"?",url:""})); }
+    else if (cap) { answer = "**Assets With Critical Findings:**\n" + cap.join("\n"); }
   }
   else if (q.includes("gpo") || q.includes("compliance")) {
     const cap = captureSection(lines, "Compliance", "Activity");
-    if (cap) answer = "**Compliance:**\\n" + cap.join("\\n");
+    if (cap) answer = "**Compliance:**\n" + cap.join("\n");
   }
   else if (q.includes("executive") || q.includes("summary") || q.includes("overview") || q.includes("posture")) {
     const ov = captureSection(lines, "Overview", "Compliance");
-    if (ov) answer = "**Overview:**\\n" + ov.join("\\n");
+    if (ov) answer = "**Overview:**\n" + ov.join("\n");
   }
   else if (q.includes("cve")) {
-    const m = q.match(/cve[-\\s]*(\\d{4}[-\\s]*\\d+)/i);
+    const m = q.match(/cve[-\s]*(\d{4}[-\s]*\d+)/i);
     if (m) {
-      const id = "CVE-" + m[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
+      const id = "CVE-" + m[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
       const hl = lines.filter(l => l.includes(id));
-      if (hl.length > 0) { answer = "**" + id + ":**\\n" + hl.join("\\n"); sources = [{type:"cve",label:id,url:""}]; }
+      if (hl.length > 0) { answer = "**" + id + ":**\n" + hl.join("\n"); sources = [{type:"cve",label:id,url:""}]; }
     }
     if (!answer) {
       const all = captureSection(lines, "All Active CVEs", "Assets With Critical Findings");
       if (all) {
         const crit = q.includes("critical") ? all.filter(l => l.includes("Critical")) : all;
-        answer = "**CVEs (" + crit.length + "):**\\n" + crit.slice(0, 10).join("\\n");
-        if (crit.length > 10) answer += "\\n...and " + (crit.length - 10) + " more";
+        answer = "**CVEs (" + crit.length + "):**\n" + crit.slice(0, 10).join("\n");
+        if (crit.length > 10) answer += "\n...and " + (crit.length - 10) + " more";
       }
     }
   }
   else if (q.includes("team") || q.includes("infrastructure") || q.includes("platform")) {
     const t = captureSection(lines, "Team Health", "Critical KEV CVEs");
-    if (t && t.length > 0) answer = "**Teams:**\\n" + t.join("\\n");
+    if (t && t.length > 0) answer = "**Teams:**\n" + t.join("\n");
   }
   else if (q.includes("remediation") || q.includes("deploy")) {
     const a = captureSection(lines, "Activity", "Critical KEV CVEs");
-    if (a) answer = "**Activity:**\\n" + a.join("\\n");
+    if (a) answer = "**Activity:**\n" + a.join("\n");
   }
 
   if (!answer && knowledge.length > 100) {
@@ -1021,11 +1142,10 @@ async function keywordSearch(question) {
   // Cross-tool bridge: check for pending remediations from ShieldView/RemFlow
   if (!answer && (q.includes("pending") || q.includes("remediation") || q.includes("queue") || q.includes("remflow") || q.includes("deploy"))) {
     try {
-      const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
-      const queue = JSON.parse(queueRaw || '[]');
+      const queue = await readRemediationQueueForWrite() || [];
       const pending = queue.filter(i => i.status === 'pending' || i.status === 'deployed');
-      const validatedRaw = await Storage.read(KEYS.VALIDATED_REMEDIATIONS);
-      const validated = JSON.parse(validatedRaw || '[]');
+      const storage = await storageAdapterPromise;
+      const validated = await storage.readCollection(KEYS.VALIDATED_REMEDIATIONS);
       if (pending.length > 0 || validated.length > 0) {
         answer = "**Cross-Tool Pipeline Status**\n";
         if (pending.length > 0) {
@@ -1046,9 +1166,9 @@ async function keywordSearch(question) {
   if (!answer) {
     // Check for remediation action requests
     if (q.includes("remediate") || q.includes("fix ") || q.includes("queue remediation") || q.includes("deploy fix")) {
-      const cveMatch = q.match(/cve[\\s-]*(\\d{4}[\\s-]*\\d+)/i);
+      const cveMatch = q.match(/cve[\s-]*(\d{4}[\s-]*\d+)/i);
       if (cveMatch) {
-        const cveId = "CVE-" + cveMatch[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
+        const cveId = "CVE-" + cveMatch[1].replace(/[\s-]/g, "-").replace(/--/g, "-");
         const count = await queueRemediation(cveId);
         if (count > 0) {
           answer = "✅ **Queued " + cveId + " for remediation** via RemFlow.\nCheck the Launchpad pipeline to track progress.";
@@ -1063,57 +1183,96 @@ async function keywordSearch(question) {
   }
 
   if (!answer) {
-    answer = "I couldn't find a match. Try:\\n"
-      + "- \"Which assets have critical KEV vulnerabilities?\"\\n"
-      + "- \"Show me health status of domain controllers\"\\n"
-      + "- \"What is our GPO compliance rate?\"\\n"
-      + "- \"Executive summary of our security posture\"\\n"
-      + "- \"Tell me about CVE-2026-10011\"\\n"
-      + "- \"List all critical CVEs\"\\n"
-      + "- \"Remediate CVE-2026-12345\"\\n"
+    answer = "I couldn't find a match. Try:\n"
+      + "- \"Which assets have critical KEV vulnerabilities?\"\n"
+      + "- \"Show me health status of domain controllers\"\n"
+      + "- \"What is our GPO compliance rate?\"\n"
+      + "- \"Executive summary of our security posture\"\n"
+      + "- \"Tell me about CVE-2026-10011\"\n"
+      + "- \"List all critical CVEs\"\n"
+      + "- \"Remediate CVE-2026-12345\"\n"
       + "- \"What's pending in the remediation queue?\"";
   }
   return { answer, sources };
 }
 
-// Cross-tool: queue a CVE for remediation via the Storage adapter
+// Cross-tool: queue a CVE for remediation via the localStorage bridge
 async function queueRemediation(cveId) {
   try {
-    // Check if we have knowledge data about this CVE
-    const assetMatch = knowledge.match(/- ([^ ]+).*/);
-    const hostname = assetMatch ? assetMatch[1] : "ASSET-" + Math.floor(Math.random() * 100);
-    
-    const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
-    const queue = JSON.parse(queueRaw || '[]');
-    // Don't duplicate
-    if (queue.some(i => i.cve === cveId && i.status === 'pending')) return 0;
-    
-    queue.push({
-      cve: cveId,
-      hostname: hostname,
-      status: 'pending',
-      severity: 'high',
-      queuedAt: new Date().toISOString(),
-      queuedBy: 'AskClippy'
+    const normalizedCve = normalizeCveId(cveId);
+    const allMatchingFindings = (liveFindings || []).filter(f => normalizeCveId(f.cve) === normalizedCve);
+    const matchingFindings = allMatchingFindings.filter(f => (f.state || 'Active') === 'Active');
+    const matchingRemediation = (liveRemediations || []).find(r => normalizeCveId(r.cve) === normalizedCve);
+    const assets = uniqueNonEmpty([
+      ...matchingFindings.map(f => f.asset || f.hostname),
+      ...((matchingRemediation && matchingRemediation.assets) || []),
+      ...((matchingRemediation && matchingRemediation.targets) || []),
+      matchingRemediation && (matchingRemediation.asset || matchingRemediation.hostname)
+    ]);
+    if (matchingFindings.length === 0 && !matchingRemediation) return 0;
+    if (assets.length === 0) return 0;
+
+    const sourceFindingIds = uniqueNonEmpty(matchingFindings.map(f => f.id || f.findingId));
+    const sourceFindingIdentityKeys = uniqueNonEmpty(matchingFindings.map(findingIdentityKey));
+    const remediationKey = matchingRemediation?.remediationKey || ('AskClippy|' + normalizedCve + '|' + sourceFindingIdentityKeys.slice().sort().join('~'));
+    const queue = await readRemediationQueueForWrite();
+    if (!queue) return 0;
+    const duplicate = queue.some(i => {
+      if (i.remediationKey && i.remediationKey === remediationKey) return true;
+      const existingKeys = uniqueNonEmpty([...(i.sourceFindingIdentityKeys || []), ...((i.findings || []).map(f => f.identityKey))]);
+      return normalizeCveId(i.cve) === normalizedCve && existingKeys.length > 0 && sourceFindingIdentityKeys.some(k => existingKeys.includes(k));
     });
-    await Storage.write(KEYS.REMEDIATION_QUEUE, JSON.stringify(queue));
+    if (duplicate) return 0;
+
+    const now = new Date().toISOString();
+    const item = {
+      id: 'AC-' + normalizedCve + '-' + Date.now(),
+      remediationKey: remediationKey,
+      cve: normalizedCve,
+      name: matchingRemediation?.name || matchingRemediation?.title || matchingFindings[0]?.check || normalizedCve,
+      assets: assets,
+      targets: assets,
+      targetCount: assets.length,
+      hostname: assets[0],
+      status: 'pending',
+      severity: matchingRemediation?.severity || matchingFindings[0]?.severity || 'High',
+      queuedAt: now,
+      createdAt: now,
+      queuedBy: 'AskClippy',
+      source: 'AskClippy',
+      solution: matchingRemediation?.solution || matchingFindings[0]?.solution || '',
+      sourceFindingIds: sourceFindingIds,
+      sourceFindingIdentityKeys: sourceFindingIdentityKeys,
+      findings: matchingFindings.map(f => ({
+        findingId: f.id || f.findingId || null,
+        identityKey: findingIdentityKey(f),
+        asset: f.asset || f.hostname || '',
+        cve: f.cve,
+        check: f.check || f.name || '',
+        port: f.port || '',
+        pluginId: f.pluginId || '',
+        state: f.state || ''
+      }))
+    };
+    if (!isCanonicalRemediation(item)) return 0;
+    const nextQueue = queue.concat([item]);
+    if (!await persistRemediationQueueSafely(nextQueue, item)) return 0;
     return 1;
   } catch(e) { return 0; }
 }
-
-function captureSection(lines, startLabel, endLabel) {
-  let capturing = false, captured = [];
-  for (const line of lines) {
-    if (line.startsWith("## ") && line.includes(startLabel)) { capturing = true; continue; }
-    if (capturing && endLabel && line.startsWith("## ") && line.includes(endLabel)) break;
-    if (capturing && line.startsWith("- ")) captured.push(line);
-  }
-  return captured.length > 0 ? captured : null;
-}
-
 // ═══════════════════════════════════════════════════════════
 //  CHAT UI
 // ═══════════════════════════════════════════════════════════
+
+function sanitizeCitationUrl(value) {
+  try {
+    const url = new URL(String(value || ""), location.href);
+    if (url.protocol !== "https:" || url.hostname !== "mrdchiang.github.io") return "";
+    return url.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  } catch (error) {
+    return "";
+  }
+}
 
 function addMessage(role, content, sources, filterSpec) {
   const el = document.createElement("div");
@@ -1147,7 +1306,11 @@ function addMessage(role, content, sources, filterSpec) {
             if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;';
             if (m === '"') return '&quot;'; if (m === "'") return '&#39;'; return m;
           });
-          citesHtml += '<a href="' + s.url + '" target="_blank" class="' + cls + '" title="Open in ' + (s.type || 'tool') + '">' + label + '</a>\n';
+          const safeUrl = sanitizeCitationUrl(s.url);
+          if (safeUrl) {
+            const toolLabel = s.type === 'cve' ? 'ShieldView' : s.type === 'asset' ? 'TheValidator' : 'RemFlow';
+            citesHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" class="' + cls + '" title="Open in ' + toolLabel + '">' + label + '</a>\n';
+          }
         }
       });
       citesHtml += '</div>';
@@ -1291,7 +1454,8 @@ let clippyTimer = null;
 let clippyBubbleTimer = null;
 
 function initClippy() {
-  initClippyDrag().catch(function(){});
+  placeClippyBubble();
+  initClippyDrag();
   initClippyDoubleClick();
   // First wake-up
   setTimeout(clippyWakeUp, 500);
@@ -1300,7 +1464,28 @@ function initClippy() {
   scheduleNextAutoQuote();
 }
 
+function placeClippyBubble() {
+  const dock = document.getElementById('clippy-dock');
+  const bubble = document.getElementById('clippy-bubble');
+  const mascot = document.getElementById('clippy-corner');
+  const chat = document.querySelector('.chat-area');
+  const input = document.querySelector('.input-area');
+  if (!dock || !bubble || !mascot || !chat || !input) return;
+
+  if (window.innerWidth <= 768) {
+    if (dock.parentNode !== chat) chat.insertBefore(dock, input);
+    bubble.style.removeProperty('left');
+    bubble.style.removeProperty('right');
+    bubble.style.removeProperty('bottom');
+    bubble.classList.remove('bubble-right');
+    bubble.classList.add('bubble-left');
+  } else if (dock.parentNode !== document.body) {
+    document.body.insertBefore(dock, document.querySelector('script'));
+  }
+}
+
 function scheduleNextAutoQuote() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const delay = 25000 + Math.random() * 20000; // 25-45 seconds
   if (clippyAutoTimer) clearTimeout(clippyAutoTimer);
   clippyAutoTimer = setTimeout(() => {
@@ -1309,9 +1494,42 @@ function scheduleNextAutoQuote() {
   }, delay);
 }
 
+function syncClippyBubblePosition(el) {
+  const mascot = el || document.getElementById('clippy-corner');
+  const bubble = document.getElementById('clippy-bubble');
+  if (!mascot || !bubble) return;
+
+  if (window.innerWidth <= 768) {
+    placeClippyBubble();
+    return;
+  }
+
+  const gap = window.innerWidth <= 768 ? 22 : 18;
+  const mascotRect = mascot.getBoundingClientRect();
+  const bubbleRect = bubble.getBoundingClientRect();
+  const bubbleWidth = bubbleRect.width || (window.innerWidth <= 768 ? 230 : 360);
+  const bubbleHeight = bubbleRect.height || 70;
+
+  bubble.classList.remove('bubble-left', 'bubble-right');
+  if (mascotRect.left >= bubbleWidth + gap + 12) {
+    bubble.style.left = 'auto';
+    bubble.style.right = Math.max(12, window.innerWidth - mascotRect.left + gap) + 'px';
+    bubble.classList.add('bubble-left');
+  } else {
+    bubble.style.right = 'auto';
+    bubble.style.left = Math.min(window.innerWidth - bubbleWidth - 12, mascotRect.right + gap) + 'px';
+    bubble.classList.add('bubble-right');
+  }
+
+  const desiredBottom = window.innerHeight - mascotRect.bottom + mascotRect.height * 0.52;
+  const maxBottom = Math.max(84, window.innerHeight - bubbleHeight - 12);
+  bubble.style.bottom = Math.max(84, Math.min(maxBottom, desiredBottom)) + 'px';
+}
+
 function clippySay(msg) {
   const bubble = document.getElementById("clippy-bubble");
   bubble.textContent = msg;
+  syncClippyBubblePosition();
   bubble.classList.remove("hidden");
   clearTimeout(clippyBubbleTimer);
   clippyBubbleTimer = setTimeout(() => bubble.classList.add("hidden"), 7000);
@@ -1408,63 +1626,66 @@ function clippyRandom() {
 // ═══════════════════════════════════════════════════════════
 
 loadKnowledge();
+checkOllamaAvailability();
 initClippy();
 
 // ═══ CLIPPY UPGRADE: Context-aware reactions, drag, double-click ═══
 
 // React to answer content
 function clippyReactToAnswer(answer, question) {
-  const a = (answer || '').toLowerCase();
-  const q = (question || '').toLowerCase();
+  const reaction = classifyClippyReaction(answer, question);
 
   // Error / couldn't find
-  if (a.includes('couldn') || a.includes('error') || a.includes('no match') || a.includes('not found')) {
+  if (reaction === 'error') {
     setTimeout(clippyConfused, 400);
     return;
   }
 
   // Remediation queued
-  if (a.includes('queued') || a.includes('remediation')) {
+  if (reaction === 'queued') {
     setTimeout(() => { clippyCelebrate(); clippySay("Remediation queued! Check the pipeline."); }, 500);
     return;
   }
 
   // Critical findings / bad news
-  if (a.includes('critical') || a.includes('kev') || a.includes('exploit') || a.includes('unhealthy')) {
+  if (reaction === 'critical') {
     setTimeout(() => { clippyShake(); clippySay("Yikes. Those are bad."); }, 500);
     return;
   }
 
   // Good news / compliant / healthy
-  if (a.includes('compliant') || a.includes('healthy') || a.includes('pass') || a.includes('✅') || a.includes('good')) {
+  if (reaction === 'good') {
     setTimeout(() => { clippyCelebrate(); clippySay("Nailed it!"); }, 500);
     return;
   }
 
   // Pipeline / cross-tool status
-  if (a.includes('pipeline') || a.includes('pending') || a.includes('verified')) {
-    setTimeout(clippyTap, 500);
+  if (reaction === 'pipeline') {
+    setTimeout(() => { clippyTap(); clippySay("Pipeline summary ready."); }, 500);
     return;
   }
 
   // Default: happy tap
-  setTimeout(clippyTap, 400);
+  setTimeout(() => { clippyTap(); clippySay("Answer ready."); }, 400);
 }
 
 // Drag support
 let clippyDrag = { active: false, startX: 0, startY: 0, origX: 0, origY: 0 };
 
-async function initClippyDrag() {
+function initClippyDrag() {
   const el = document.getElementById('clippy-corner');
-  // Load saved position
-  try {
-    const posRaw = await Storage.read(KEYS.CLIPPY_POSITION);
-    const pos = JSON.parse(posRaw || '{}');
-    if (pos.right !== undefined) el.style.right = pos.right + 'px';
-    if (pos.bottom !== undefined) el.style.bottom = pos.bottom + 'px';
-  } catch(e) {}
+  // A saved desktop position can place Clippy outside a narrow viewport.
+  if (window.innerWidth > 768) {
+    try {
+      const pos = JSON.parse(localStorage.getItem(KEYS.CLIPPY_POSITION) || '{}');
+      if (pos.right !== undefined) el.style.right = pos.right + 'px';
+      if (pos.bottom !== undefined) el.style.bottom = pos.bottom + 'px';
+    } catch(e) {}
+  }
+  syncClippyBubblePosition(el);
 
   el.addEventListener('mousedown', function(e) {
+    if (window.innerWidth <= 768) return;
     clippyDrag.active = true;
     clippyDrag.startX = e.clientX;
     clippyDrag.startY = e.clientY;
@@ -1482,12 +1703,7 @@ async function initClippyDrag() {
     const dy = clippyDrag.startY - e.clientY;
     el.style.right = (clippyDrag.origRight - dx) + 'px';
     el.style.bottom = (clippyDrag.origBottom + dy) + 'px';
-    // Move speech bubble to follow Clippy
-    const bubble = document.getElementById('clippy-bubble');
-    if (bubble) {
-      bubble.style.right = el.style.right;
-      bubble.style.bottom = (parseInt(el.style.bottom) + 110) + 'px';
-    }
+    syncClippyBubblePosition(el);
   });
 
   document.addEventListener('mouseup', function() {
@@ -1497,17 +1713,17 @@ async function initClippyDrag() {
     el.classList.remove('dragging');
     // Save position
     try {
-      Storage.write(KEYS.CLIPPY_POSITION, JSON.stringify({
+      localStorage.setItem(KEYS.CLIPPY_POSITION, JSON.stringify({
         right: parseInt(el.style.right) || 40,
         bottom: parseInt(el.style.bottom) || 120
-      })).catch(function(){});
-      // Also sync bubble position on save
-      const bubble = document.getElementById('clippy-bubble');
-      if (bubble) {
-        bubble.style.right = el.style.right;
-        bubble.style.bottom = (parseInt(el.style.bottom) + 110) + 'px';
-      }
+      }));
+      syncClippyBubblePosition(el);
     } catch(e) {}
+  });
+
+  window.addEventListener('resize', function() {
+    placeClippyBubble();
+    syncClippyBubblePosition(el);
   });
 }
 
@@ -1544,7 +1760,11 @@ function clippyWakeUp() {
     clippySay("Morning! Ready to scan.");
   }, 1800);
 }
+</script>
 
+<script type="module">
+import { installSuiteHealth } from '/launchpad/shared/suite-health.js';
+installSuiteHealth("AskClippy");
 </script>
 </body>
 </html>
