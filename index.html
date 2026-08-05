@@ -332,10 +332,18 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
       async write(key, val) { localStorage.setItem(key, val); }
     };
   }
+  // Smoke test — verify Storage is functional
+  try {
+    await window.Storage.write('__askclippy_storage_test__', 'ok');
+    var testVal = await window.Storage.read('__askclippy_storage_test__');
+    console.log('[AskClippy] Storage adapter test:', testVal === 'ok' ? 'PASS' : 'FAIL');
+  } catch(testErr) {
+    console.error('[AskClippy] Storage adapter test FAIL:', testErr.message);
+  }
 })();
-// ════ Contract Version Check ─────────────────────────────────(function(){  var CV = KEYS.CONTRACT_VERSION_KEY;  var VER = '1.0.0';  try {    var stored = localStorage.getItem(CV);    if (!stored) { localStorage.setItem(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = function(){ b.remove(); localStorage.setItem(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
+// ════ Contract Version Check ─────────────────────────────────(async function(){  var CV = KEYS.CONTRACT_VERSION_KEY;  var VER = '1.0.0';  try {    var stored = await Storage.read(CV);    if (!stored) { await Storage.write(CV, VER); return; }    if (stored !== VER) {      var b = document.createElement('div');      b.style.cssText = 'background:#352215;color:#ff7722;padding:8px 16px;text-align:center;font-size:12px;font-family:monospace;cursor:pointer;z-index:99999;position:relative';      b.textContent = '⚠ Contract v' + VER + ' ≠ stored v' + stored + '. Some features may not work. Click to dismiss.';      b.onclick = async function(){ b.remove(); await Storage.write(CV, VER); };      document.body.insertBefore(b, document.body.firstChild);    }  } catch(e) {}})();
 // ════ Error Catcher ──────────────────────────────────────────
-(function(){'use strict';const SK=KEYS.ERROR_LOG,MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';function gl(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}function sl(l){try{while(l.length>MX)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();localStorage.setItem(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;const l=gl();l.push(e);sl(l)}
+(async function(){'use strict';const SK=KEYS.ERROR_LOG,MX=200,TN=document.title||location.pathname.split('/').filter(Boolean).pop()||'Unknown';async function gl(){try{return JSON.parse(await Storage.read(SK)||'[]')}catch(e){return[]}}async function sl(l){try{while(l.length>MX)l.shift();await Storage.write(SK,JSON.stringify(l))}catch(e){try{while(l.length>50)l.shift();await Storage.write(SK,JSON.stringify(l))}catch(e2){}}}function ae(e){e.tool=TN;e.url=location.href;e.timestamp=new Date().toISOString();e.userAgent=navigator.userAgent;gl().then(function(l){l.push(e);return sl(l)}).catch(function(){})}
 window.onerror=function(m,s,l,c,err){ae({type:'runtime-error',message:String(m),source:s||'',line:l||0,col:c||0,stack:err&&err.stack?String(err.stack).slice(0,2000):''});return false};
 window.addEventListener('unhandledrejection',function(e){const r=e.reason;ae({type:'unhandled-rejection',message:String(r),stack:r&&r.stack?String(r.stack).slice(0,2000):''})});
 var oce=console.error;console.error=function(){try{var a=Array.prototype.slice.call(arguments);ae({type:'console-error',message:a.map(function(x){try{return typeof x==='object'?JSON.stringify(x,null,2).slice(0,500):String(x)}catch(e){return String(x)}}).join(' ').slice(0,2000),args:a.length})}catch(e){}return oce.apply(console,arguments)};
@@ -446,7 +454,7 @@ function switchDataSource(source) {
   const fileInfo = document.getElementById("fileInfo");
 
   if (source === "live") {
-    loadLivePipeline();
+    loadLivePipeline().catch(function(e){ clippySay('Live pipeline load error: ' + e.message); });
     freshnessEl.style.display = "";
     updateFreshnessIndicator();
     if (uploadStatus) uploadStatus.textContent = "🔄 Live";
@@ -474,14 +482,14 @@ function switchDataSource(source) {
   }
 }
 
-function loadLivePipeline() {
+async function loadLivePipeline() {
   try {
-    const findingsRaw = localStorage.getItem(KEYS.IMPORTED_FINDINGS);
-    const assetsRaw = localStorage.getItem(KEYS.IMPORTED_ASSETS);
-    const queueRaw = localStorage.getItem(KEYS.REMEDIATION_QUEUE);
-    const validatedRaw = localStorage.getItem(KEYS.VALIDATED_REMEDIATIONS);
-    const verifiedRaw = localStorage.getItem(KEYS.VERIFIED_QUEUE);
-    const kevRaw = localStorage.getItem(KEYS.KEV_CATALOG);
+    const findingsRaw = await Storage.read(KEYS.IMPORTED_FINDINGS);
+    const assetsRaw = await Storage.read(KEYS.IMPORTED_ASSETS);
+    const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
+    const validatedRaw = await Storage.read(KEYS.VALIDATED_REMEDIATIONS);
+    const verifiedRaw = await Storage.read(KEYS.VERIFIED_QUEUE);
+    const kevRaw = await Storage.read(KEYS.KEV_CATALOG);
 
     liveFindings = findingsRaw ? JSON.parse(findingsRaw) : [];
     liveAssets = assetsRaw ? JSON.parse(assetsRaw) : [];
@@ -699,7 +707,7 @@ async function queryAI(question) {
 
   // Step 3: Fall back to keyword search
   lastRetrievalMode = 'keyword_fallback';
-  return keywordSearch(question);
+  return await keywordSearch(question);
 }
 
 // ── Structured Retrieval: parse question → filter spec → execute locally ──
@@ -952,7 +960,7 @@ JSON:`;
 }
 
 // ── Keyword Search (fallback) ──
-function keywordSearch(question) {
+async function keywordSearch(question) {
   const q = question.toLowerCase();
   if (!knowledge) return { answer: "No knowledge loaded. Upload a scan file or switch to Live Pipeline!", sources: [] };
   const lines = knowledge.split("\\n");
@@ -1013,9 +1021,11 @@ function keywordSearch(question) {
   // Cross-tool bridge: check for pending remediations from ShieldView/RemFlow
   if (!answer && (q.includes("pending") || q.includes("remediation") || q.includes("queue") || q.includes("remflow") || q.includes("deploy"))) {
     try {
-      const queue = JSON.parse(localStorage.getItem(KEYS.REMEDIATION_QUEUE) || '[]');
+      const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
+      const queue = JSON.parse(queueRaw || '[]');
       const pending = queue.filter(i => i.status === 'pending' || i.status === 'deployed');
-      const validated = JSON.parse(localStorage.getItem(KEYS.VALIDATED_REMEDIATIONS) || '[]');
+      const validatedRaw = await Storage.read(KEYS.VALIDATED_REMEDIATIONS);
+      const validated = JSON.parse(validatedRaw || '[]');
       if (pending.length > 0 || validated.length > 0) {
         answer = "**Cross-Tool Pipeline Status**\n";
         if (pending.length > 0) {
@@ -1039,7 +1049,7 @@ function keywordSearch(question) {
       const cveMatch = q.match(/cve[\\s-]*(\\d{4}[\\s-]*\\d+)/i);
       if (cveMatch) {
         const cveId = "CVE-" + cveMatch[1].replace(/[\\s-]/g, "-").replace(/--/g, "-");
-        const count = queueRemediation(cveId);
+        const count = await queueRemediation(cveId);
         if (count > 0) {
           answer = "✅ **Queued " + cveId + " for remediation** via RemFlow.\nCheck the Launchpad pipeline to track progress.";
           sources = [{type:"remediation",label:cveId,url:"https://mrdchiang.github.io/remflow/#/remediations?cve="+encodeURIComponent(cveId)}];
@@ -1066,14 +1076,15 @@ function keywordSearch(question) {
   return { answer, sources };
 }
 
-// Cross-tool: queue a CVE for remediation via the localStorage bridge
-function queueRemediation(cveId) {
+// Cross-tool: queue a CVE for remediation via the Storage adapter
+async function queueRemediation(cveId) {
   try {
     // Check if we have knowledge data about this CVE
     const assetMatch = knowledge.match(/- ([^ ]+).*/);
     const hostname = assetMatch ? assetMatch[1] : "ASSET-" + Math.floor(Math.random() * 100);
     
-    const queue = JSON.parse(localStorage.getItem(KEYS.REMEDIATION_QUEUE) || '[]');
+    const queueRaw = await Storage.read(KEYS.REMEDIATION_QUEUE);
+    const queue = JSON.parse(queueRaw || '[]');
     // Don't duplicate
     if (queue.some(i => i.cve === cveId && i.status === 'pending')) return 0;
     
@@ -1085,7 +1096,7 @@ function queueRemediation(cveId) {
       queuedAt: new Date().toISOString(),
       queuedBy: 'AskClippy'
     });
-    localStorage.setItem(KEYS.REMEDIATION_QUEUE, JSON.stringify(queue));
+    await Storage.write(KEYS.REMEDIATION_QUEUE, JSON.stringify(queue));
     return 1;
   } catch(e) { return 0; }
 }
@@ -1280,7 +1291,7 @@ let clippyTimer = null;
 let clippyBubbleTimer = null;
 
 function initClippy() {
-  initClippyDrag();
+  initClippyDrag().catch(function(){});
   initClippyDoubleClick();
   // First wake-up
   setTimeout(clippyWakeUp, 500);
@@ -1443,11 +1454,12 @@ function clippyReactToAnswer(answer, question) {
 // Drag support
 let clippyDrag = { active: false, startX: 0, startY: 0, origX: 0, origY: 0 };
 
-function initClippyDrag() {
+async function initClippyDrag() {
   const el = document.getElementById('clippy-corner');
   // Load saved position
   try {
-    const pos = JSON.parse(localStorage.getItem(KEYS.CLIPPY_POSITION) || '{}');
+    const posRaw = await Storage.read(KEYS.CLIPPY_POSITION);
+    const pos = JSON.parse(posRaw || '{}');
     if (pos.right !== undefined) el.style.right = pos.right + 'px';
     if (pos.bottom !== undefined) el.style.bottom = pos.bottom + 'px';
   } catch(e) {}
@@ -1485,10 +1497,10 @@ function initClippyDrag() {
     el.classList.remove('dragging');
     // Save position
     try {
-      localStorage.setItem(KEYS.CLIPPY_POSITION, JSON.stringify({
+      Storage.write(KEYS.CLIPPY_POSITION, JSON.stringify({
         right: parseInt(el.style.right) || 40,
         bottom: parseInt(el.style.bottom) || 120
-      }));
+      })).catch(function(){});
       // Also sync bubble position on save
       const bubble = document.getElementById('clippy-bubble');
       if (bubble) {
